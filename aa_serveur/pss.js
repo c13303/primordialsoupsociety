@@ -46,8 +46,8 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer(
                     urlinfo = urlinfo.split('-');
                     var username = urlinfo[1];
                     var token = urlinfo[0];
-                    var query = 'SELECT id,ip,username FROM fos_user WHERE username="' + username + '" AND token = "' + token + '"';
-                    connection.query(query, function (err, rows, fields) {
+                    var query = 'SELECT id,ip,username FROM fos_user WHERE username= ? AND token = ?';
+                    connection.query(query,[username,token], function (err, rows, fields) {
                         if (!rows || !rows[0])
                         {
                             callback(false);
@@ -57,7 +57,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer(
                         if (rows[0] && rows[0].id && n)
                         {
                             console.log('access granter');
-                            connection.query('UPDATE fos_user SET token="0" WHERE username="' + username + '" AND token = "' + token + '"');
+                            connection.query('UPDATE fos_user SET token="0" WHERE username=? AND token = ? ',[username,token]);
                             callback(true);
                         } else
                         {
@@ -133,10 +133,10 @@ map.move = function move(ws, direction) {
         return(null);
     }
 
-    var query = 'UPDATE fos_user SET x=' + nextX + ',y=' + nextY + ' WHERE id=' + ws.id + ';';
+    var query = 'UPDATE fos_user SET x= ? ,y= ? WHERE id= ?;';
     ws.x = nextX;
     ws.y = nextY;
-    connection.query(query, function (err, rows, fields) {
+    connection.query(query, [nextX,nextY,ws.id],function (err, rows, fields) {
         ws.send(JSON.stringify({command: 'moved', x: nextX, y: nextY}));
         map.checkMap(ws);
         map.playerList(ws, clients);
@@ -147,8 +147,8 @@ map.move = function move(ws, direction) {
 
 
 map.checkMap = function pssCheckMap(ws) {
-    var query = 'SELECT id,name,description,user_id,file,x,y FROM map WHERE X=' + ws.x + ' AND Y=' + ws.y + '';
-    connection.query(query, function (err, rows, fields) {
+    var query = 'SELECT id,name,description,user_id,file,x,y FROM map WHERE X=? AND Y=?';
+    connection.query(query,[ws.x,ws.y], function (err, rows, fields) {
         try {
             if (!rows[0]) {
                 console.log('leaving map :-(');
@@ -168,8 +168,8 @@ map.update = function pssUpdate(ws, id = null) {
     if (!id) {
         id = ws.id;
     }
-    var query = 'SELECT x,y,karma,sex,life,sanity,score,speak,money,level,file,AI FROM fos_user WHERE id=' + id + '';
-    connection.query(query, function (err, rows, fields) {
+    var query = 'SELECT x,y,karma,sex,life,sanity,score,speak,money,level,file,AI FROM fos_user WHERE id=?';
+    connection.query(query,id, function (err, rows, fields) {
         if (rows) {
             ws.send(JSON.stringify({update: rows[0]}));
         }
@@ -479,6 +479,7 @@ wss.on('connection', function aconnection(ws, req) {
                 var card = cardIndex.cardIndex[cardInHand.id];
                 // removeCardFromHand
                 Hand[i]=null; 
+                break;
             }
         }
         if (!card) {
@@ -548,7 +549,7 @@ wss.on('connection', function aconnection(ws, req) {
     
     
     ws.IAPlay = function IAPlay(){
-        
+        console.log('Ia Turn Play!');
     }
 
 

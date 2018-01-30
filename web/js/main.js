@@ -69,11 +69,13 @@ function duelInit(message) {
     /* Pose les cartes on the table */
     
     html ='';
+    var n = 0;
     for (i = 0; i < message.data.table.length; i++) {
         var cardOnTable = message.data.table[i];
-        if (cardOnTable) {
-            var offset = i * 120;
+        if (cardOnTable) {            
+            var offset = n * 120;
             html += makeCardHtml(cardOnTable.card, offset);
+            n++;
         }
     }
     $('#scene').html(html);
