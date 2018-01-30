@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>{% block title %}Primordial Soup Society Game{% endblock %}</title>
+        {% stylesheets    
+    'css/main.css'
+    'css/rangeslider.css'
+     output='css/compiled/app.css' filter='?uglifycss' filter='?cssrewrite'  %}        
+        <link rel="stylesheet" href="{{ asset_url }}" />
+        {% endstylesheets %}
+
+        {% javascripts
+    'js/jquery.min.js'
+    'js/main.js'
+    'js/canvas.js'
+    'js/rangeslider.min.js'
+        output='js/compiled/app.js' filter='?uglifyjs2' %}
+        <script src="{{ asset_url }}"></script>
+        {% endjavascripts %}
+
+
+        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
+
+    </head>
+    <body>
+        <div class="header"><h1>Primordial Soup Society</h1>
+            Fromage Interactif 2017 <a href="{{ path('homepage') }}">JOUER</a> 
+            {% if user %}               
+                {% if is_granted('ROLE_SUPER_ADMIN') %}
+                    <a href="{{ path('admin') }}">cards manager</a>  
+                    <a href="{{ path('add_card') }}">ajouter carte</a>
+                {% endif %}
+            {% endif %}
+
+            {% if is_granted("IS_AUTHENTICATED_REMEMBERED") %}
+                {{ 'layout.logged_in_as'|trans({'%username%': app.user.username}, 'FOSUserBundle') }} |
+                <a href="{{ path('fos_user_security_logout') }}">
+                    {{ 'layout.logout'|trans({}, 'FOSUserBundle') }}
+                </a>
+            {% else %}       
+                <a href="{{ path('fos_user_registration_register') }}">Inscription</a>
+            {% endif %}
+
+
+
+        </div>
+    {% block body %}{% endblock %}
+{% block javascripts %}{% endblock %}
+</body>
+</html>

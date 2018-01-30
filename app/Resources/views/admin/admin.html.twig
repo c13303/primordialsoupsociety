@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div id="wrapper">
+        <div id="container">
+            <h1>ADMIN PRIMORDIAL SOUP SOCIETY</h1>
+            <h2>Users</h2>
+            <p>User : {{ user.username }}</p>
+            {% for usa in users %}
+                <li>{{ usa.username }}</li>
+            {% endfor %}
+            
+            <h2>Cards</h2>
+            {% for card in cards %}
+                <li>{{ card.name }} {{ card.cardvalue }} 
+                    
+                    <a href="{{ asset('uploads/images/' ~ card.file) }}">Image</a>
+                    - <a href="{{ path('edit_card',{"card" : card.id }) }}">edit</a></li>
+            {% endfor %}
+        
+            
+            
+            
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+
+{% endblock %}

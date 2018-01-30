@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Fabrication du lieu</h1>
+
+    <div class="instruction notice">
+        <p>Etant un pionner dans la découverte de cette lieux au coordonnées {{map.x}},{{map.y}}, vous avez le bénéfice d'en être le créateur !</p>
+        <p>Pour créer ce lieu, donnez lui un nom, et un texte de description littéraire en bon français, en s'adressant au visiteur, ex : "Vous êtes ...". </p>
+        <p> Pensez à décrire sons, couleurs, ambiances ... En bon français pour que votre lieu survive aux modérateurs.</p>
+
+        <p>Vous êtes également invité à illustrer ce lieu. Pour cela : </p>
+        <li>Copier Coller (Control+V) une image directement sur le Canvas ci-dessous</li>
+        <li>Soit utiliser le bouton "uploader" sous le Canvas</li>
+        <br/>
+        <p>Cliquer ensuite sur "sauver"</p>
+    </div>
+    {{ form(mapForm) }}
+    <div class="editimage">
+        Sensibilité couleur (clair <-> foncé)
+        <input type='range' min="0" max="255" step="1"  data-orientation="horizontal" id="sensitivity" value="109" data-tr='109' data-tg='111' data-tb='101'/>
+
+        <div id="source" data-source='{{ images_folder }}{{map.file}}?{{random(999)}}'></div>
+        <div id="canvasDiv" style='width:1000px;height:600px;'></div>
+        <input type="file" id="upfile" value='telecharger une image du disque'/> 
+        <button id="color" class="hidden">color</button>
+    </div>
+{% endblock %}

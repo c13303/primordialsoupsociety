@@ -1,0 +1,170 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div id="overlay">
+        <div id="popin">
+        </div>
+    </div>
+    <div id="loader" class="">
+        <img src="{{ asset('images/loader.gif') }}" />
+    </div>
+
+    <div id="wrapper">
+        <div id="container">
+
+            {% if user %}
+                <div class="leftCol cols">
+                    <div id="selfContainer">
+                        <div id="self" class="card avatar fade avatarshadow">
+                            <img src="{{user_folder}}{{user.file}}?dummy={{random(999)}}" />
+                            <div class="peopleinfo">
+                                {{user.username}}: {{user.speak}}
+                            </div>
+                        </div>
+                    </div>
+                    <div id="stats" class="">                        
+                        <div id="life"><label>life:</label><span class="value">{{ user.life }}</span></div>
+                        <div id="kama"><label>karma:</label><span class="value">{{ user.karma }}</span></div>
+                        <div id="money"><label>money:</label><span class="value">{{ user.money }}</span></div>
+                        <div id="sanity"><label>sanity:</label><span class="value">{{ user.sanity }}</span></div>
+                        <div id="score"><label>score:</label><span class="value">{{ user.score }}</span></div>
+                        <div id="level"><label>level:</label><span class="value">{{ user.level }}</span></div>
+                        
+                        <br/><a href="{{ path('edit_user',{'user':user.id}) }}" class="fullload">editer mon personnage</a>
+                    </div>  
+                    
+                    <div id="cards_container" class="hidden">
+                            <h2>Techniques</h2>
+                            {% if deck != null %}
+                                {% for main in deck %}
+                                    <div class="card">
+                                        {{ main.card.name }}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    
+                    <div id='minimap'>
+                        <div class="hidden duelstuff duelstats" id="pstats">
+                            <div class="life"></div>
+                            <div class="stats">  
+                                <div class="karma"></div>
+                                <div class="sex"></div>
+                                <div class="sanity"></div>
+                            </div>                            
+                        </div>
+                        <table id='minimaptable' class="mapStuff">                        
+                        </table>
+                        <div class="move mapStuff">
+                            <table class='joystick' data-moving="0">
+                                <tr>
+                                    <td></td>
+                                    <td> <button id="up" class='command' data-command='move' data-value='up'>⇧</button></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td><button id="left" class='command' data-command='move' data-value='left'>⇦</button></td>                           
+                                    <td></td>
+                                    <td><button id="right" class='command' data-command='move' data-value='right'>⇨</button></td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td> <button id="down" class='command' data-command='move' data-value='down'>⇩</button></td>
+                                    <td></td>
+                                </tr>
+                            </table>
+                            <div class="infobulle hidden infolieu">Vous avez le pouvoir de façonner ce lieu !</div>
+                            <a href="#caca" class="fullload" id="edit-link" data-route="{{ path('edit_map') }}" data-idmap="{{map.id}}">editer le lieu</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="centralCol cols card hidden">
+                    <div id="duel">
+                        <div id="turn"></div>
+                        <div id="dueldesc"></div>
+                        <div id="hand"></div>
+                        <div id="scene"></div>
+                    </div>
+                    <div id="map" class="infobox">
+                        <input type="hidden" id="updatemap" value="{{ updatemap }}" data-x="{{user.X}}" data-y="{{user.Y}}">
+                        
+                        <div id="duelbg"></div>
+                        <div id="mapimage" data-folder="{{ images_folder }}">
+                            <img id="imagebg" src='' />
+                        </div>
+                        <div class="whitecontent">
+                            <h2 class='title'> ▱ 
+                                <span id="nom" class="hidden" data-id="{{user.id}}">{{ user.username }}</span>
+
+                                <span class="fade place">Monde</span>
+                                (
+                                <span id="x"><span class="value">{{user.x}}</span></span>,
+                                <span id="y"><span class="value">{{user.y}}</span></span>
+                                )
+
+                            </h2>
+
+                            <div class="desc">                        
+                            </div>
+                        </div>
+                    </div>  
+                </div>
+                <div class="rightCol cols fade3">
+                    <div id="peoplehere" class="avatarshadow" data-folder="{{user_folder}}">
+
+                    </div>
+                    <div class="hidden duelstuff duelstats" id="ostats">
+                            <div class="life"></div>
+                            <div class="stats">  
+                                <div class="karma"></div>
+                                <div class="sex"></div>
+                                <div class="sanity"></div>
+                            </div>                            
+                    </div>
+                </div>
+
+
+
+                <div class="hidden">
+
+
+                    <div id="people" class="">
+                        <h2>En ligne</h2>
+                        <div class="content"></div>
+                    </div>
+
+                    {% if user %}
+                        <div id="chat_container" class="">
+                            <div id="chat">
+                                {{ info|raw }}
+                            </div>
+                            <input type="text" id="inpute" />
+                            <button id="chatte">send message</button>
+                        </div>
+
+
+
+                        
+
+                        {% endif %}
+
+
+                {% endif %}
+
+
+                {% if user %}
+                    <input type="hidden" id="token" value="{{ token }}" />
+                    <input type="hidden" id="user" value="{{ user.username }}" />
+                {% endif %}
+                {% if user == null %}
+                    {{ render(controller("FOSUserBundle:Security:login")) }}
+                {% endif %}
+
+            </div>
+
+
+        </div>
+
+
+    {% endblock %}

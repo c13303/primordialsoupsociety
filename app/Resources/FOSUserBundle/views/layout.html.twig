@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>{% block title %}Primordial Soup Society Game{% endblock %}</title>
+        {% stylesheets    
+    'css/main.css'
+    'css/rangeslider.css'
+     output='css/compiled/app.css' filter='?uglifycss' %}        
+        <link rel="stylesheet" href="{{ asset_url }}" />
+        {% endstylesheets %}
+        
+        {% javascripts
+    'js/jquery.min.js'
+    'js/main.js'
+    'js/canvas.js'
+    'js/rangeslider.min.js'
+    
+        output='js/compiled/app.js' filter='?uglifyjs2' %}
+        <script src="{{ asset_url }}"></script>
+        {% endjavascripts %}
+        
+        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
+
+    </head>
+    <body>
+        <div class="header">
+            Fromage Interactif 2017 <a href="{{ path('homepage') }}">Accueil</a> 
+
+
+        </div>
+
+
+    </body>
+</html>
+
+
+<body>
+    <div class="container">
+        <h2>Identificration</h2>
+        {% if app.request.hasPreviousSession %}
+            {% for type, messages in app.session.flashBag.all %}
+                {% for message in messages %}
+                    <div class="{{ type }}">
+                        {{ message|trans({}, 'FOSUserBundle') }}
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        {% endif %}
+
+        <div>
+            {% block fos_user_content %}
+            {% endblock fos_user_content %}
+        </div>
+    </div>
+</body>
+
