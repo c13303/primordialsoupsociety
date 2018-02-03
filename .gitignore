@@ -16,3 +16,5 @@
 /vendor/
 /web/bundles/
 aa_serveur/params.js
+/web/upload/
+/web/uploads/
