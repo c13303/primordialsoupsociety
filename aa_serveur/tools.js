@@ -34,40 +34,42 @@ module.exports = {
     describeCardEffet: function (card) {
         var desc = '';
         if (card.type == 'Damage') {
-            desc += 'Provoque un dommage de ';
+            desc += '<div class="damage icgp">';
         }
         if (card.type == 'Buff') {
-            desc += 'Provoque un boost de ';
+            desc += '<div class="buff icgp">';
         }
         if (card.karma) {
-            desc += card.karma + ' points de Karma,';
-        }
-        if (card.sex) {
-            desc += card.sex + ' points de Sex-Appeal,';
+            desc += '<div class="ikar ic">'+ card.karma + '</div> ';
         }
         if (card.sanity) {
-            desc += card.sanity + ' points de Santé Mentale,';
+            desc += '<div class="isan ic">'+card.sanity + '</div>';
         }
+        if (card.sex) {
+            desc += '<div class="isex ic">'+card.sex + '</div>';
+        }
+        
         if (card.turns) {
-            desc += ' pour ' + card.turns + ' tours';
+            desc += ' <div class="tur ic">' + card.turns + ' </div>';
         }
+        
+        desc += '</div>';
         return(desc);
 
     },
-    sixFirst: function (ws,cardIndex) { /// building the hand 6 Card for front play
-        var deck = ws.deck;
+    sixFirst: function (deck,cardIndex) { /// building the hand 6 Card for front play        
         var index = cardIndex;
-        var result = {};
+        var result = [];
         for (i = 0; i < 6; i++) {
             var card_id = deck[i].card_id;
             var deck_id = deck[i].id;
-            result[i] = index[card_id];
+            result.push(index[card_id]);
             result[i].effect = module.exports.describeCardEffet(index[card_id]);
             result[i].deck_id = deck_id;
         }
         return(result);
     },
-    calculateStrike(attacker,defenser,table,cardIndex){        
+    calculateStrike(attacker,defender,table,cardIndex){        
         
         var result = {};
         
@@ -75,27 +77,27 @@ module.exports = {
         result.attackSex = attacker.sex;
         result.attackSan = attacker.sanity;
         
-        result.defenseKar = defenser.karma;
-        result.defenseSex = defenser.sex;
-        result.defenseSan = defenser.sanity;        
+        result.defenseKar = defender.karma;
+        result.defenseSex = defender.sex;
+        result.defenseSan = defender.sanity;        
         
-        var effects = [];        
+        var effects = [];  
+        
         for (i = 0; i < table.length; i++) {
             if (table[i]) {
                 var id_card = table[i].id;
                 var card = cardIndex[id_card];
                 var cardPosee = table[i];
-
                 if (card.special_name) {
                     effects.push(card.special_name);
                 }
-                if ((card.type === 'Damage' || card.type === 'Buff') && attacker.id === cardPosee.player) {
+                if ((card.type === 'Damage' || card.type === 'Buff') && attacker.id === cardPosee.attacker.id) {
                     result.attackKar += card.karma;
                     result.attackSex += card.sex;
                     result.attackSan += card.sanity;
                 }
 
-                if ((card.type === 'Defense' || card.type === 'Buff') && defenser.id === table.player) {
+                if ((card.type === 'Defense' || card.type === 'Buff') && defender.id === cardPosee.defender.id) {
                     result.defenseKar += card.karma;
                     result.defenseSex += card.sex;
                     result.defenseSan += card.sanity;
@@ -103,23 +105,32 @@ module.exports = {
             }
         }
         
-        /* SEX > KARMA > SAN >
+        /*    wheel of power
          * 
-         *  Karma : Dominated by Sex (double shield)
-         *  Karma : Dominate Sanity (ignore)
-         *  Karma : Equaled by Karma
+         *     SEX  >  KARMA 
+         *       ^     v
+         *         SAN
          *    
-         *    */
-        
-        result.totalKar = result.attackKar - result.defenseKar - (result.defenseSex * 2);
-        result.totalSex = result.attackSex - result.defenseSex - (result.defenseSan * 2);
-        result.totalSan = result.attackSan - result.defenseSan - (result.defenseKar * 2);
+         *    dominate = 1:0  (defense is ignored)
+         *    equals = 1:1    (defense has ratio 1)
+         *    dominated = 1:2 (defense has double ratio and can inflict return damage !)
+         */
+        result.totalKar = result.totalSex = result.totalSan = 0;
+        if(result.attackKar){
+            result.totalKar = result.attackKar - result.defenseKar - (result.defenseSex * 2);
+        }
+        if(result.attackSex){
+            result.totalSex = result.attackSex - result.defenseSex - (result.defenseSan * 2);
+        }
+        if(result.attackSan){
+            result.totalSan = result.attackSan - result.defenseSan - (result.defenseKar * 2);
+        }
         
         result.totalDamage = result.totalKar + result.totalSex + result.totalSan;
         
         result.effects = effects;
         result.attacker = attacker.username;
-        result.defenser = defenser.username;
+        result.defenser = defender.username;
         
         result.card = card;
         

@@ -4,30 +4,28 @@
 */
 *{
     color:#6d6f50;
-    font-family:monospace;
+    
 }
 .hidden{
     display:none;
 }
-.header{
-    display:none;
-}
+
 h1{
-    display:inline;
+    display:block;
 }
-textarea{
-    min-width:500px;
-    min-height:200px;
-}
+
 body{
-    padding:20px;
+    padding:0;
     background-color:#e6eaad;
-    color:#6d6f50;
-    font-family:monospace;
+    color:#6d6f50;    
     max-width: 1320px;
     position: relative;
     margin: auto;
+    overflow: hidden;
+font-family: 'Source Sans Pro', sans-serif;
 }
+
+
 h2{
     margin: 0 0 20px;
     display: inline;
@@ -44,25 +42,28 @@ label{
 
 }
 #container{
-    width:1200px;
+    width:1240px;
     margin:auto;
     display:table;
-
+    padding-top: 20px;
 }
 .cols{
     float:left;
 }
 
 .leftCol,.rightCol{
-    width:250px;
+    width:200px;
 }
 .centralCol{
-    width: 700px;
+    width: 840px;
     height: 810px;
     background: #bfa182;    
     position: relative;
 }
-
+.instructions{
+    font-size:12px;
+    padding-top:100px;
+}
 
 #chat{
     height: 200px;
@@ -91,15 +92,38 @@ label{
 }
 #popin{
     background:white;
-    padding:20px;    
+    padding: 10px    ;
     width:500px;    
     margin:10% auto;
 }
 #map .whitecontent{
     font-size: 20px;
     background: white;
-    padding: 20px;
-    height:300px;
+    padding: 10px;
+    height: 350px;
+    width: 524px;
+    float: left;
+    display: inline-block;
+    overflow-y: scroll;
+}
+#editbloc{
+    height:810px;
+    width:840px;
+    display:none;
+    z-index:20;
+}
+
+#upfiletrigger{
+    cursor:pointer;
+}
+
+#map .whitecontent .instruction{
+    font-size:13px;
+}
+#minimap.uploadstuff{
+    font-size: 13px;
+    width: 256px;
+    height:330px;
 }
 .title{
     font-size:20px;
@@ -113,6 +137,12 @@ label{
     text-align:center;
     position: relative;    
 }
+#mapimageeditor{
+    height:440px;
+    text-align:center;
+    position: relative;   
+}
+
 #duelbg{
     width: 680px;
     height: 408px;
@@ -121,33 +151,39 @@ label{
     display:none;
 }
 #canvasDiv{
-    border:1px solid #cfd486;
 }
 
 
-
+iframe{
+    width: 820px;
+    height: 785px;
+    border: none;
+    position: absolute;
+    overflow: hidden;
+}
 .avatar{
     height:280px;
     width:200px;    
     bottom:0;
-    padding:20px;
+    padding: 10px;
     background:green; 
 
 }
 .card{
-    -webkit-filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); 
-    filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+    -webkit-filter: drop-shadow(0 0 3px rgba(0,0,0,0.5)); 
+    filter: drop-shadow(0 0 3px rgba(0,0,0,0.5));
     -webkit-transition: 0.4s ease-in-out;
     -moz-transition: 0.4s ease-in-out;
     -o-transition: 0.4s ease-in-out;
     transition: 0.4s ease-in-out;
 }
 .card:hover{
-    z-index:2000;
+   
 }
 
-#dueldesc{
-    position:absolute;
+
+.playername{
+    font-weight: bold;
 }
 
 #peoplehere .card:hover{
@@ -176,9 +212,7 @@ label{
 
 
 
-#hand{
-    padding-top:500px;
-}
+
 
 .canvasloader{
     position: absolute;
@@ -213,6 +247,14 @@ a{
     width: 100px;
     border-radius: 10px;
     padding: 10px;
+}
+
+#minimap{
+    float: left;
+    background: white;
+    height: 330px;
+    padding: 20px;
+    width:235px;
 }
 #minimaptable{
     width:236px;
@@ -250,12 +292,12 @@ a{
 }
 #imagebg{
     width:100%;
-    height:auto;
+    height:420px;
 }
 .peopleinfo{
-
+    font-size:15px;
     background: white;
-    padding: 20px;  
+    padding: 10px;  
     text-align:left;
     background:white;
     margin-top:10px;
@@ -267,25 +309,29 @@ a{
     position: absolute;
     cursor: pointer;
     background: #757575;
-    padding: 20px;
+    padding: 10px;
     margin: 10px;
     z-index: 20;
     height:280px;
-    width:200px;
+    width: 160px;
 }
 .otherpeople img, .avatar img{
-    height:158px;
-    width:200px;
+    height: 175px;
+    width: 100%;
 }
 #selfContainer{
     height:320px;
 
 }
 #self{
-    cursor:pointer;
+cursor: pointer;
     height: 280px;
-    width: 200px;
+    width: 160px;
+    
+        position: relative;
 }
+
+
 .otherpeople:hover .peopleinfo,#self:hover .peopleinfo{
     display:block;
 }
@@ -315,20 +361,12 @@ a{
     z-index: 20;
     position: absolute;
     background: white;
-    width: 660px;
-    padding: 20px;
+    width: 800px;
+        padding: 20px;
     height: 800px;
 }
 
-.handcard{
-    width: 180px;
-    height: 250px;
-    background: #ece15b;
-    padding: 10px;
-    /* float: left; */
-    position: absolute;
-    cursor:pointer;
-}
+
 
 .handcard .name{
     font-weight: bold;
@@ -356,16 +394,132 @@ a{
     margin-left: 20px;
 }
 .action{
-    font-size:20px;
+    
 }
 
+table { border-collapse:collapse }
+.padme{
+       padding: 20px;
+    background: #d2b598;
+    margin: 20px;
+    text-align: center;
+}
 #turn::before{
     content:"TOUR : ";
 }
-
+#hand{
+    padding-top:600px;
+}
 #scene{
     position: absolute;
-    height: 400px;
-    top: 105px;
+    height: 200px;
+    top: 360px;
     width: 660px;
+    margin-left:20px;
+}
+#sceneO{
+    position: absolute;
+    height: 200px;
+    top: 150px;
+    width: 660px;
+    right:0px;
+    z-index:-1;
+    margin-left:20px;
+}
+#dueldesc{
+    position: absolute;
+    font-size: 13px;
+    z-index: 200000;
+    background: white;
+}
+.gridsquare{
+    width:130px;
+    height:150px;
+    display:inline-block;
+}
+.handcard{
+    width: 100px;
+    height: 150px;
+    background: #ece15b;
+    padding: 10px;
+    /* float: left; */
+    position: absolute;
+    cursor:pointer;
+}
+.ic{
+    background-size: 10px 10px;
+    padding-left: 10px;
+    background-repeat: no-repeat;
+    background-position: left;
+    width: 20px;
+    display: inline-block;
+}
+.isex{
+    background-image:url(/images/lips.png);    
+}
+.ikar{
+    background-image:url(/images/karma.png);    
+}
+.isan{
+    background-image:url(/images/san.png);    
+}
+.tur{
+    background-image:url(/images/time.png);    
+}
+.logo{
+    text-align:center;
+}
+.logo svg{
+    width:100px;
+    height:100px;
+    margin:auto;
+}
+.logo svg path,.logo svg ellipse{
+    fill:#d2b598;
+    -webkit-transition: 0.4s ease-in-out;
+    -moz-transition: 0.4s ease-in-out;
+    -o-transition: 0.4s ease-in-out;
+    transition: 0.4s ease-in-out;
+}
+.logo svg:hover path,.logo svg:hover ellipse{
+    fill:white;
+    
+}
+
+.upload{
+    width:30px;
+    height:30px;
+    margin:auto;
+    background-size: 30px 30px;
+    background-repeat: no-repeat;
+    background-position: left;
+    background-image:url(/images/upload.svg);   
+}
+.infobulledroite{
+        position: absolute;
+    background: yellow;
+    padding: 20px;
+    width: 200px;
+    margin-left: 190px;
+    margin-top: -160px;
+}
+form label{
+    display:none;
+}
+#appbundle_map_description{
+    width: 100%;
+    height: 186px;
+}
+
+#minimap .infobulledroite{
+    position: relative; 
+    margin-left: 0px; 
+     margin-top: 0px; 
+}
+
+#appbundle_user_speak{
+    margin: 20px auto;
+    height: 64px;
+    width: 200px;
+    display: block;
 }

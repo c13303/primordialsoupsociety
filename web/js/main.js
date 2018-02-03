@@ -1,4 +1,8 @@
 /* Fromage Interactif ALL RIGHTS RESERVED */
+var currentPCase = 0;
+var currentOCase = 0;
+var currentHCase = 0;
+var gridComplete = 0;
 
 function matrix(rows, cols, defaultValue) {
     var arr = [];
@@ -12,40 +16,90 @@ function matrix(rows, cols, defaultValue) {
     return arr;
 }
 
+
+
+function positionCard(isO) {
+   
+    var card = $('.waitforposition');
+    card.each(function () {
+        
+        $(this).removeClass('waitforposition');
+        if (!isO) {
+             var select = '#scene .gridsquare' + currentPCase;
+            $(this).appendTo(select);
+            currentPCase++;
+        }
+        if (isO === 'O') {
+            var select = '#sceneO .gridsquare' + currentOCase;
+           $(this).appendTo(select);
+
+            currentOCase++;
+        }
+        if (isO === 'H') {
+            var select = '#hand .gridsquare' + currentHCase;
+           $(this).appendTo(select);
+           currentHCase++;
+        }
+    });
+
+}
+
+
+
+
+
+
 function isolateOpponent(id_target) {
+    var found = 0;
     $('.otherpeople').each(function () {
         if ($(this).data('id') != id_target) {
-            $(this).animate({opacity: 0.0}, 700, 'linear');
+            $(this).animate({opacity: 0.0}, 700, 'linear');           
         }
     })    
     $('#player'+id_target).css('margin-top','0px');
+    if(!$('#player'+id_target).data('id')){
+        alert('opponent not here '+id_target);
+    }
 }
 
 var allowedToPlay = 0;
+var id = $('#nom').data('id');
 
 function updateStats(player,opponent) {
     $('#pstats .life').html(player.life);
     $('#pstats .karma').html(player.karma);
     $('#pstats .sex').html(player.sex);
-    $('#pstats .sanity').html(player.sanity);
-    
+    $('#pstats .sanity').html(player.sanity);    
     $('#ostats .life').html(opponent.life);
     $('#ostats .karma').html(opponent.karma);
     $('#ostats .sex').html(opponent.sex);
     $('#ostats .sanity').html(opponent.sanity);
 }
 
-
-function makeCardHtml(data,offset){
-    var html = '';
-    html += '<div style="margin-left:' + offset + 'px;" class="card handcard command activehandcard playerhandcard" data-command="playcard" data-value="' + data.deck_id + '">';
+/* HTML de la CARTE */
+function makeCardHtml(data,someclass){
+    var html = '';    
+    html += '<div id="card'+data.deck_id+'" class="card handcard command '+someclass+'" data-command="playcard" data-value="' + data.deck_id + '">';
     html += '<div class="name">' + data.name + '</div>';
     html += '<div class="carddesc">' + data.description + '</div>';
     html += '<div class="cardeffect">' + data.effect + '</div>';
     html += '</div>';
-    return(html);
+     $('#positionner').append(html);
+    
 }
 
+/*
+ * Opponent pose 1 Carte
+ */
+function playerCard(card){
+    var html = makeCardHtml(card,'opponentTableCard waitforposition');   
+    positionCard('O');
+
+}
+
+/*
+ *  Charge Le DUEL
+ */
 function duelInit(message) {
     var data = message.data;
     var opponent = message.data.ennemy;
@@ -53,33 +107,40 @@ function duelInit(message) {
     $('.mapStuff').hide();
     $('.duelstuff').show();
     $('#duel').show();
-    var html ='';
     
     /*
-     *  Pose la main du player
+     *  Pose la main du player 
      */
-    for (i = 0; i < 6; i++) {
-        if (data.hand[i]) {
-            var offset = i * 120;
-            html += makeCardHtml(data.hand[i], offset);
+    setTimeout(function () {
+        for (i = 0; i < 6; i++) {
+            if (data.hand[i]) {
+                makeCardHtml(data.hand[i], 'playerhandcard waitforposition activehandcard');
+                positionCard('H');
+
+            }
         }
-    }
-    $('#hand').html(html);
-    
-    /* Pose les cartes on the table */
-    
-    html ='';
-    var n = 0;
-    for (i = 0; i < message.data.table.length; i++) {
-        var cardOnTable = message.data.table[i];
-        if (cardOnTable) {            
-            var offset = n * 120;
-            html += makeCardHtml(cardOnTable.card, offset);
-            n++;
+        /* Pose les cartes on the table */
+        for (i = 0; i < message.data.table.length; i++) {
+            var cardOnTable = message.data.table[i];
+            if (cardOnTable && cardOnTable.attacker.id === player.id) {
+                makeCardHtml(cardOnTable.card, 'playerhandcard waitforposition');
+            }
+            positionCard(null);
+            if (cardOnTable && cardOnTable.attacker.id !== player.id) {
+                makeCardHtml(cardOnTable.card, 'waitforposition');
+            }
+            positionCard('O');
         }
-    }
-    $('#scene').html(html);
-    duelUpdate(message);
+
+        duelUpdate(message);
+
+    }, 1000); // [timer sinon ça chiale O_?]
+    
+
+
+    
+    
+    
 }
 
 function duelUpdate(message) {
@@ -90,38 +151,104 @@ function duelUpdate(message) {
     if(allowedToPlay){
         $('.playerhandcard').addClass('command').addClass('activehandcard');
         var nextAttacker = player;
-        var nextDefender = opponent;
+        var nextDefender = opponent;        
     } else{
         $('.playerhandcard').removeClass('command').removeClass('activehandcard');
         var nextAttacker = opponent;
         var nextDefender = player;
     }
+    
     updateStats(player, opponent);
+    
     $('#turn').html(message.data.duelTurn);
-    var text='';
+    var text = '';
     if (message.data.last.totalDamage > 0) { // classic damage
         var damage = message.data.last;
-        text += '<p class="action">' + damage.attacker + ' a infligé ' + damage.totalDamage + ' points de dommages à ' + damage.defenser + ' avec ' + damage.card.name + ' ! </p>';
-
-    }
-    text += "<p>C'est à " + nextAttacker.username + " de jouer.</p>";
+        text += '<p class="action">\n\
+                <span class="playername">' + damage.attacker + '</span> a infligé ' + damage.totalDamage + ' \n\
+                points de dommages à <span class="playername">' + damage.defenser + '</span> avec <span class="cardname">' + damage.card.name + '</span> ! </p>';
+                    }
+    if (message.data.last.totalDamage < 0) { // contre-damaged
+        var damage = message.data.last;
+        text += '<p class="action"><span class="playername">' + damage.attacker + '</span> s\'est infligé '
+                                + damage.totalDamage + ' points de dommages en essayant de toucher <span class="playername">' + damage.defenser + '</span>\n\
+                 avec <span class="cardname">' + damage.card.name + '</span> ! </p>';
+                    }
+    
+    
+    text += "<p>C'est à <span class='playername'>" + nextAttacker.username + "</span> de jouer.</p>";
     $('#dueldesc').html(text);
+    
+   /* whats next ? */
+    if (!allowedToPlay) {
+        $('#dueldesc').append('<p><a href="#e" class="command" data-command="waitForOpponent" data-value="1">OK</a></p>');        
+    }    
 }
 
 
 
 
-
-
-
-
-
+function completeIframe(){
+    $('#loader').hide();
+    $('#map #loadingimage').remove();
+    $('#editframe').show();
+}
 
 $(document).ready(function () {
+    
+    
+    
+    $('.centralCol').fadeIn(200);
+    /*editlink */
+    $('.fullload').click(function () {      
+        $('#loader').show();
+        var route = $(this).data('route');
+        var idmap = $(this).data('idmap');
+        if(route && idmap){
+            var link = route + '?idmap=' + idmap;  
+            window.location.replace(link);
+        }
+        
+    });
+    
+    
+  
+
+
+    
+   
     /* DOM READY */
+    
+    /*
+     * copié en HTML pour plus de rapidité
+     */
+    gengrid(6, 1, $('#scene'));
+    gengrid(6, 1, $('#sceneO'));
+    gengrid(6, 1, $('#hand'));
+
+    /* connect est lancé a lissue des 3 gengrid */
+    function gengrid(n, j, div) {
+        var output = '';
+        var macase = 0;
+        for (var i = 0; i < j; i++) {
+            output += '<div class="row row' + i + '">';
+            for (k = 0; k < n; k++) {
+                
+                output += '<div class="gridsquare gridsquare' + macase + '"></div>';
+                macase++;
+            }
+            output += '</div>';
+        }
+        div.append(output);
+        
+    }
+
     if ($('#token').val()) {
         connect($('#token').val(), $('#user').val());
-    }
+    } else {
+        console.log('offline mode');
+    } 
+    
     
     var fullmap;
     var environs;
@@ -141,8 +268,7 @@ $(document).ready(function () {
             for (j = fromx; j < tox; j++) {
                 if (i >= 0 && i < 100 && j >= 0 && j < 100) {
                     var outputcase = '';
-                    var thecase = fullmap[j][i];
-                    
+                    var thecase = fullmap[j][i];                    
                     if (thecase.file) {
                         var r = 207;
                         var g = 212 - (j + i);
@@ -179,9 +305,10 @@ $(document).ready(function () {
         
         /* auth & connexion */        
         var ws = new WebSocket('ws://51.15.167.221:8080/' + token + '-' + user);
+        
         setTimeout(function () {
             if (ws.readyState != 1) {
-                $('#chat').html('Erreur de connexion : <a href="">Réessayer ? </a>');
+                alert('serveur inaccessible');
             }
             if($('#updatemap').val()) {
                 var obj = {};
@@ -198,6 +325,21 @@ $(document).ready(function () {
                 }
             }
         }, 3000);
+        
+        
+        
+        
+        
+        window.closeIframe = function () {
+            $('#editbloc').html('').hide();
+            var obj = {};
+            obj.command = 'move';
+            obj.value = null;
+            var json = JSON.stringify(obj);
+            ws.send(json);
+        }
+        
+        
         
         /* message */
         ws.onmessage = function (event) {
@@ -250,7 +392,7 @@ $(document).ready(function () {
                 });
             }
 
-
+            
             /*  reception map presente   */
             if (message.map) {
                 var delay = 200;
@@ -265,7 +407,7 @@ $(document).ready(function () {
                 $('.fade2').fadeOut(delay);
                 $('.fade3').fadeOut(delay);
                 $('#imagebg').fadeOut(delay);
-                $('.centralCol').fadeOut(delay);
+                
                 var folder = $('#mapimage').data('folder');
                 if (message.map.user_id === $('#nom').data('id') || !message.map.user_id){
                     $('#edit-link').show();
@@ -275,7 +417,7 @@ $(document).ready(function () {
                     if (file) {
                         $('#imagebg').attr('src', folder + file + '?dummy=' + Math.floor(Math.random() * 999) + 1);
                     }
-                    $('.centralCol').fadeIn(delay * 2);
+                    
                 }
                 , delay);
                 timer2 = setTimeout(function () {
@@ -308,20 +450,23 @@ $(document).ready(function () {
             /* duel offline engaged */
             
             if (message.duel === 'go') {
-                duelInit(message);
+                duelInit(message,ws);
+            }
+            
+            if (message.duel === 'playerCard') {
+                playerCard(message.data);
             }
             
             if(message.duel === 'update'){
-                duelUpdate(message);
+                duelUpdate(message,ws);      
             }
-
-        }
+        };
         $(document).on('click','.activehandcard',function(){
-            var offset = $('#turn').html() * 75 - 75;
-            $(this).addClass('posed');
-            $(this).css('margin-left',offset);
+            $(this).addClass('waitforposition');
+            positionCard(null);   
+                     
             $('.activehandcard').removeClass('command').removeClass('activehandcard');
-        })
+        });
 
         /* send chat */
         $('#chatte').click(function () {
@@ -331,7 +476,7 @@ $(document).ready(function () {
             var json = JSON.stringify(obj);
             ws.send(json);
             $('#inpute').val('');
-        })
+        });
 
         /* send command standard */
         $(document).on('click','.command',function () {            
@@ -340,15 +485,14 @@ $(document).ready(function () {
             obj.value = $(this).data('value');
             var json = JSON.stringify(obj);
             console.log('send command '+obj.command+' '+obj.value);
-            ws.send(json);
-        })
+            try{
+                ws.send(json);
+            } catch (e){
+                window.location.reload();
+            }
+        });
 
-        /*edit link */
-        $('#edit-link').click(function () {
-            var route = $(this).data('route');
-            var idmap = $(this).data('idmap');
-            window.location.replace(route + '?idmap=' + idmap);
-        })
+       
 
         /* move command */
         $('.move .command').click(function () {
@@ -357,17 +501,14 @@ $(document).ready(function () {
             clearTimeout(timer3);
             clearTimeout(timer4);
             $('#duelbg').fadeOut(700);
-        })
+        });
 
 
         $('.infolieu').mouseover(function () {
             $(this).fadeOut(600);
-        })
+        });
 
-        $('.fullload').click(function () {
-            $('#wrapper').hide();
-            $('#loader').show();
-        })
+
         
         /* click on people */
         $(document).on('click','.otherpeople',function(){

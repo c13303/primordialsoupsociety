@@ -49,7 +49,7 @@ class MapController extends Controller {
         }
         
         $form = $this->createForm(MapType::class, $map);
-
+        $has_edit=null;
         if ($request->isMethod('POST')) {
             $form->submit($request->request->get($form->getName()), null);
             if ($form->isSubmitted() && $form->isValid()) {
@@ -58,7 +58,6 @@ class MapController extends Controller {
                 $newfile = $newfile['file'];
                 /* upload part */
                 if ($newfile) {
-
                     $img = str_replace('data:image/png;base64,', '', $newfile);
                     $img = str_replace(' ', '+', $img);
                     $fileData = base64_decode($img);
@@ -70,6 +69,7 @@ class MapController extends Controller {
                 $map->setUser($user);
                 $em->persist($map);
                 $em->flush();
+                $has_edit=1;
                 return $this->redirect($this->generateUrl('homepage',array('updatemap'=>1)));
             }
         }
@@ -78,6 +78,7 @@ class MapController extends Controller {
                     'user' => $user = $this->getUser(),
                     'map' => $map,
                     'images_folder'=>Map::IMAGES_FOLDER,
+                    'has_edit'=>$has_edit
         ]);
     }
 

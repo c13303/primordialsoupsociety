@@ -1,19 +1,35 @@
 {% extends 'base.html.twig' %}
+{% block centralcol %}
+    <div class="padme">
+        <h1>CREATURE EDITOR</h1>
+        <br/>
 
-{% block body %}
-    <h1>CREATURE CUSTOMISATION</h1>
 
-<div class="instruction notice">
-    <p>Vous pouvez créer l'avatar de 2 façons : </p>
-    <li>Selectionner votre image en cliquant sur le selecteur de fichier</li>
-    <li>Copier coller directement votre image dans le canvas ! </li>
-</div>
-  
-    Sensibilité couleur (clair <-> foncé)
-<input type='range' min="0" max="255" step="1"  data-orientation="horizontal" id="sensitivity" value="109" data-tr='255' data-tg='255' data-tb='255'/>
+        <div id="self" class="card avatar avatarshadow" style="margin:auto;">
+            <div id="canvasDiv" style='width:160px;height:175px; background:#cfd486'></div>
+            <div class="infobulledroite">Le saviez-tu ? Tu peux <b>copier-coller</b> une image directement sur la carte.
+                <br/>
+                <br/>
+                Ou bien uploader :<br/>
+                <div class="upload" id="upfiletrigger"></div>
+                <br/>
+                Ce curseur sert à modifier <br/><b>la sensibilité du filtre</b><br/>
+                de clair à foncé
+                <br/> 
+                <input type='range' min="0" max="255" step="1"  data-orientation="horizontal" id="sensitivity" value="109" data-tr='255' data-tg='255' data-tb='255'/>
+            </div>
+            <div class="peopleinfo">
+                {{user.username}} 
+                <span id='sayin'>
+                </span>
+            </div>
+        </div>
 
-<div id="canvasDiv" style='width:200px;height:300px; background:#cfd486'></div>
-<input type="file" id="upfile" value='telecharger une image du disque'/> 
- <div id="source" data-source='{{ images_folder }}{{user.file}}?{{random(999)}}'></div>
-   {{ form(userForm) }}
+        <input type="file" id="upfile" class="hidden" value='telecharger une image du disque'/> 
+
+
+        <div id="source" data-source='{{ images_folder }}{{user.file}}?{{random(999)}}'></div>
+        {{ form(userForm) }}
+        <a href="{{ path('homepage') }}" class="annuler fullload">ANNULER</a>
+    </div>
 {% endblock %}

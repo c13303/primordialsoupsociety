@@ -25,14 +25,30 @@ connection.connect();
 console.log('Lancement serveur');
 
 /* command line args */
+function flush(){
+    var flushsessionquery = "UPDATE `pss`.`fos_user` SET `sessiondata` = '' ";
+    connection.query(flushsessionquery, function (err, rows, fields) {
+        console.log('sessions FLUSHED!');
+    });
+}
+
 process.argv.forEach(function (val, index, array) {
    if(val=='-flush'){ //flush all sessions
-       var flushsessionquery = "UPDATE `pss`.`fos_user` SET `sessiondata` = '' ";
-       connection.query(flushsessionquery, function (err, rows, fields) {
-           console.log('sessions FLUSHED!');
-       });
+       flush();
    }
 });
+
+var stdin = process.openStdin();
+
+stdin.addListener("data", function(d) {
+    var commande =  d.toString().trim();
+    console.log("you entered: [" + 
+       commande + "]");
+       if(commande==='flush'){
+           flush();
+       }
+  });
+
 
 
 var WebSocketServer = require('ws').Server, wss = new WebSocketServer(
@@ -56,7 +72,6 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer(
                         var n = ip.indexOf(rows[0].ip);
                         if (rows[0] && rows[0].id && n)
                         {
-                            console.log('access granter');
                             connection.query('UPDATE fos_user SET token="0" WHERE username=? AND token = ? ',[username,token]);
                             callback(true);
                         } else
@@ -163,7 +178,9 @@ map.checkMap = function pssCheckMap(ws) {
         }
     });
 }
-
+/*
+ * UPDATE LE PLAYER
+ */
 map.update = function pssUpdate(ws, id = null) {
     if (!id) {
         id = ws.id;
@@ -287,7 +304,7 @@ wss.on('connection', function aconnection(ws, req) {
     });
     // on connect
     ws.connected = function connected() {
-        console.log('--- client connect ' + this.user + '@' + this.ip + '----');
+        console.log('--- client access granter ' + this.user + '@' + this.ip + '----');
        
         
         /* check if connected already, KICKING HIM */
@@ -333,6 +350,9 @@ wss.on('connection', function aconnection(ws, req) {
         });
     }
     
+    ws.getMyCards = function getMyCards(){
+         ws.send(JSON.stringify({deck: ws.session.deck}));
+    }
 
 
     /*
@@ -342,6 +362,8 @@ wss.on('connection', function aconnection(ws, req) {
     ws.updateDuelClient = function updateClientDuel(init) {
         var data = {
             player: {
+                id : ws.player.id,
+                username : ws.player.username,
                 life : ws.player.life,
                 sex : ws.player.sex,
                 karma : ws.player.karma,
@@ -413,19 +435,20 @@ wss.on('connection', function aconnection(ws, req) {
     // init offline duel step 3 : get ennemy deck
     ws.loadEnnemyDeck = function loadEnnemyDeck() {  /// ofline ennemy deck
         var query = 'SELECT * FROM deck WHERE user_id = ?';
-        var info = connection.query(query, this.adversaire, function (err, rows, fields) {
-            ws.ennemyDeck = rows;
-            if (!ws.deck.length || !ws.ennemyDeck.length) {
+        var info = connection.query(query, this.adversaire, function (err, rows, fields) {            
+            if (!ws.deck.length || !rows.length) {
                 console.log('error : empty deck');
             } else {                
                 
                 /*
                  * INIT THE DUEL CLIENT
                  */
+                ws.session.player = ws.player;
+                ws.session.player.sessiondata = ws.session.player.ip = '';  /// le player session est cleané
                 ws.session.deck = tools.shuffle(ws.deck);
-                ws.session.ennemyDeck = tools.shuffle(ws.ennemyDeck);
-                ws.session.hand = tools.sixFirst(ws,cardIndex.cardIndex);
-                ws.session.ennemyHand = tools.sixFirst(ws,cardIndex.cardIndex);
+                ws.session.ennemyDeck = tools.shuffle(rows);
+                ws.session.hand = tools.sixFirst(ws.session.deck,cardIndex.cardIndex);
+                ws.session.ennemyHand = tools.sixFirst(ws.session.ennemyDeck,cardIndex.cardIndex);
                 ws.session.duelTurn = 1;
                 ws.session.duelmode = 1;
                 ws.session.busy = 1;
@@ -460,30 +483,37 @@ wss.on('connection', function aconnection(ws, req) {
         /* json.value === ID de la main, not id card */
         /* security check if card in HAND */
         var card = 0;
+        var IA = 0;
         var turn = ws.session.duelTurn;
         
-        if(idplayer === ws.id){
+        if(idplayer !== ws.id){
+            var IA = 1;
+        }
+        
+        if(!IA){
             var Hand = ws.session.hand;
-            var attacker = ws.player;
+            var attacker = ws.session.player;
             var defender = ws.session.ennemy;
         } else { /* IA */
             var Hand = ws.session.ennemyHand;
             var attacker = ws.session.ennemy;
-            var defender = ws.player;
+            var defender = ws.session.player;
         }
-
+        
+        
         for (i = 0; i < handsize; i++) {
             var cardInHand = Hand[i];
-            if (cardInHand.deck_id === id_hand) {
+            if (cardInHand && cardInHand.deck_id === id_hand) {
                 /* find card in index */
                 var card = cardIndex.cardIndex[cardInHand.id];
                 // removeCardFromHand
-                Hand[i]=null; 
+                Hand.splice(i,1);
                 break;
             }
         }
         if (!card) {
             ws.cheater('error : card not found');
+            return(null);
         }
 
         /* set this card on table */
@@ -495,63 +525,55 @@ wss.on('connection', function aconnection(ws, req) {
             defender : defender,
             turn: card.turns,
         };
-        
 
         /* increment turn */
         ws.session.duelTurn++;
         
 
         /* load shield and attacks */
-        var damage = tools.calculateStrike(attacker,defender, ws.session.table, cardIndex.cardIndex);
-        
-        
+        var damage = tools.calculateStrike(attacker,defender, ws.session.table, cardIndex.cardIndex);   
         if(damage.totalDamage>0){            
             defender.life-= damage.totalDamage;             
         }
         if(damage.totalDamage<0){
             attacker.life+= damage.totalDamage;
-        }
-        
+        }        
         /*
          * Save Session Updated Values
          */
-        if(idplayer === ws.id){
+        if(!IA){
             ws.session.hand = Hand;
             ws.session.allowedToPlay = 0;
-            ws.player = attacker; // save it
+            ws.session.player = attacker; 
+            ws.session.ennemy = defender;
         } else { /* IA */
             ws.session.ennemyHand = Hand;
             ws.session.allowedToPlay = 1; 
-            ws.session.ennemy = defender; // save it
-        }
-        
-              
+            ws.session.ennemy = attacker; 
+            ws.session.player = defender;
+            
+            /* add card on table client */
+            card.deck_id = id_hand;
+            ws.send(JSON.stringify({duel: 'playerCard', data: cardInHand}));
+        }   
         ws.session.table[turn].log = ws.session.last = damage;        
-        
-        
-        
-        
         /* display the coup */
          ws.updateDuelClient(0);
          ws.updateSession();
          
          
-         /* IA 
-          * 
-          */
-         if(!ws.session.isOnline){
-             ws.IAPlay();
-             return(null);
-         }
          
          
     }
     
     
-    ws.IAPlay = function IAPlay(){
-        console.log('Ia Turn Play!');
+    ws.IAPlay = function IAPlay(){        
+        var randomcard = Math.floor((Math.random() * ws.session.ennemyHand.length));        
+        console.log('IA '+ws.session.ennemy.username+' is playing card : '+randomcard+'/'+ws.session.ennemyHand.length);
+        for(i=0;i<ws.session.ennemyHand.length;i++){
+        }
+        ws.playCard(ws.session.ennemyHand[randomcard].deck_id,null);        
     }
-
 
 
 
@@ -588,9 +610,14 @@ wss.on('connection', function aconnection(ws, req) {
                 if (json.command === 'duel') {
                     ws.initDuel(json);
                 }
-
+                
+           
                 if (json.command === 'move') {
                     map.move(ws, json.value);
+                }
+                
+                if (json.command === 'getmycards') {
+                    ws.getMyCards();
                 }
             } // end busy
             
@@ -599,6 +626,10 @@ wss.on('connection', function aconnection(ws, req) {
                 if(ws.session.allowedToPlay===1){
                     if (json.command === 'playcard') {                
                         ws.playCard(json.value,ws.id);  
+                    }
+                }else{
+                     if (json.command === 'waitForOpponent') {                
+                         ws.IAPlay();
                     }
                 }
             }

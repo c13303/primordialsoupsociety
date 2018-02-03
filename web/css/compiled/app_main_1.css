@@ -4,7 +4,7 @@
 */
 *{
     color:#6d6f50;
-    font-family:monospace;
+    font-family:arial;
 }
 .hidden{
     display:none;
@@ -23,7 +23,7 @@ body{
     padding:20px;
     background-color:#e6eaad;
     color:#6d6f50;
-    font-family:monospace;
+    
     max-width: 1320px;
     position: relative;
     margin: auto;
@@ -143,11 +143,12 @@ label{
     transition: 0.4s ease-in-out;
 }
 .card:hover{
-    z-index:2000;
+   
 }
 
-#dueldesc{
-    position:absolute;
+
+.playername{
+    font-weight: bold;
 }
 
 #peoplehere .card:hover{
@@ -176,9 +177,7 @@ label{
 
 
 
-#hand{
-    padding-top:500px;
-}
+
 
 .canvasloader{
     position: absolute;
@@ -320,15 +319,7 @@ a{
     height: 800px;
 }
 
-.handcard{
-    width: 180px;
-    height: 250px;
-    background: #ece15b;
-    padding: 10px;
-    /* float: left; */
-    position: absolute;
-    cursor:pointer;
-}
+
 
 .handcard .name{
     font-weight: bold;
@@ -356,9 +347,53 @@ a{
     margin-left: 20px;
 }
 .action{
-    font-size:20px;
+    
 }
 
 #turn::before{
     content:"TOUR : ";
+}
+#hand{
+    padding-top:600px;
+}
+#scene{
+    position: absolute;
+    height: 200px;
+    top: 360px;
+    width: 660px;
+}
+#sceneO{
+    position: absolute;
+    height: 200px;
+    top: 150px;
+    width: 660px;
+    right:0px;
+    z-index:-1;
+}
+#dueldesc{
+    position: absolute;
+    font-size: 13px;
+    z-index: 200000;
+    background: white;
+}
+.gridsquare{
+    width:110px;
+    height:150px;
+    display:inline-block;
+     z-index:-1;
+     opacity:0.4;
+}
+.handcard{
+    width: 100px;
+    height: 150px;
+    background: #ece15b;
+    padding: 10px;
+    /* float: left; */
+    position: absolute;
+    cursor:pointer;
+}
+.sex{
+    background-image:url(../../images/lips.svg);
+    background-size:10px 10px;
+    padding-left:10px;
 }

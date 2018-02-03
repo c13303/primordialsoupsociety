@@ -6,6 +6,14 @@ $(document).ready(function () {
         return null;
     }
     
+    $('#upfiletrigger').click(function(){
+        $('#upfile').trigger('click');
+    });
+    
+    $('#appbundle_user_speak').on('change keyup paste',function(){
+       $('#sayin').html($(this).val()); 
+    });
+    
     var canvasDiv = document.getElementById('canvasDiv');
     canvas = document.createElement('canvas');
     canvas.setAttribute('width', $('#canvasDiv').width());
