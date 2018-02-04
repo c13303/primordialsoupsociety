@@ -11,21 +11,17 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @ORM\Table(name="card")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\CardRepository")
  */
+class Card {
 
-
-class Card
-{
-    
-    CONST TYPES=array(
+    CONST TYPES = array(
         'Damage', // attack only
         'Buff', // boost la base donc = attack ET defense
         'Defense', // defense only
         'Special',
         'Perma'
     );
-    
-     CONST IMAGES_FOLDER = '/uploads/cards/';
-    
+    CONST IMAGES_FOLDER = '/uploads/card/';
+
     /**
      * @var int
      *
@@ -69,10 +65,12 @@ class Card
      * @ORM\Column(name="sex", type="integer")
      */
     private $sex;
-    
-  
-    
-    
+
+    /**
+     * @ORM\ManyToOne(targetEntity="AppBundle\Entity\User")
+     * @ORM\JoinColumn(nullable=true)
+     */
+    private $user;
 
     /**
      * @var string
@@ -87,7 +85,7 @@ class Card
      * @ORM\Column(name="turns", type="integer")
      */
     private $turns;
-    
+
     /**
      * @var int
      *
@@ -112,23 +110,28 @@ class Card
      * @ORM\Column(name="file", type="string", length=255, nullable=true)
      */
     private $file;
-    
-     /**
+
+    /**
      * @var int
      *
      * @ORM\Column(name="popularity", type="integer",nullable=true)
      */
     private $popularity;
-   
     
     
+      /**
+     * @var int
+     *
+     * @ORM\Column(name="locked", type="integer",nullable=true)
+     */
+    private $locked;
+
     /**
      * Get id
      *
      * @return int
      */
-    public function getId()
-    {
+    public function getId() {
         return $this->id;
     }
 
@@ -139,8 +142,7 @@ class Card
      *
      * @return Card
      */
-    public function setName($name)
-    {
+    public function setName($name) {
         $this->name = $name;
 
         return $this;
@@ -151,8 +153,7 @@ class Card
      *
      * @return string
      */
-    public function getName()
-    {
+    public function getName() {
         return $this->name;
     }
 
@@ -163,8 +164,7 @@ class Card
      *
      * @return Card
      */
-    public function setType($type)
-    {
+    public function setType($type) {
         $this->type = $type;
 
         return $this;
@@ -175,8 +175,7 @@ class Card
      *
      * @return string
      */
-    public function getType()
-    {
+    public function getType() {
         return $this->type;
     }
 
@@ -187,8 +186,7 @@ class Card
      *
      * @return Card
      */
-    public function setKarma($karma)
-    {
+    public function setKarma($karma) {
         $this->karma = $karma;
 
         return $this;
@@ -199,12 +197,10 @@ class Card
      *
      * @return int
      */
-    public function getKarma()
-    {
+    public function getKarma() {
         return $this->karma;
     }
-    
-    
+
     /**
      * Set cardvalue
      *
@@ -212,8 +208,7 @@ class Card
      *
      * @return Card
      */
-    public function setCardvalue($cardvalue)
-    {
+    public function setCardvalue($cardvalue) {
         $this->cardvalue = $cardvalue;
 
         return $this;
@@ -224,11 +219,9 @@ class Card
      *
      * @return int
      */
-    public function getCardvalue()
-    {
+    public function getCardvalue() {
         return $this->cardvalue;
     }
-    
 
     /**
      * Set sanity
@@ -237,8 +230,7 @@ class Card
      *
      * @return Card
      */
-    public function setSanity($sanity)
-    {
+    public function setSanity($sanity) {
         $this->sanity = $sanity;
 
         return $this;
@@ -249,9 +241,30 @@ class Card
      *
      * @return int
      */
-    public function getSanity()
-    {
+    public function getSanity() {
         return $this->sanity;
+    }
+
+    /**
+     * Set user
+     *
+     * @param integer $user
+     *
+     * @return Map
+     */
+    public function setUser($user) {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    /**
+     * Get user
+     *
+     * @return int
+     */
+    public function getUser() {
+        return $this->user;
     }
 
     /**
@@ -261,8 +274,7 @@ class Card
      *
      * @return Card
      */
-    public function setSex($sex)
-    {
+    public function setSex($sex) {
         $this->sex = $sex;
 
         return $this;
@@ -273,8 +285,7 @@ class Card
      *
      * @return int
      */
-    public function getSex()
-    {
+    public function getSex() {
         return $this->sex;
     }
 
@@ -285,8 +296,7 @@ class Card
      *
      * @return Card
      */
-    public function setSpecialName($specialName)
-    {
+    public function setSpecialName($specialName) {
         $this->specialName = $specialName;
 
         return $this;
@@ -297,8 +307,7 @@ class Card
      *
      * @return string
      */
-    public function getSpecialName()
-    {
+    public function getSpecialName() {
         return $this->specialName;
     }
 
@@ -309,8 +318,7 @@ class Card
      *
      * @return Card
      */
-    public function setTurns($turns)
-    {
+    public function setTurns($turns) {
         $this->turns = $turns;
 
         return $this;
@@ -321,8 +329,7 @@ class Card
      *
      * @return int
      */
-    public function getTurns()
-    {
+    public function getTurns() {
         return $this->turns;
     }
 
@@ -333,8 +340,7 @@ class Card
      *
      * @return Card
      */
-    public function setFrequency($frequency)
-    {
+    public function setFrequency($frequency) {
         $this->frequency = $frequency;
 
         return $this;
@@ -345,8 +351,7 @@ class Card
      *
      * @return int
      */
-    public function getFrequency()
-    {
+    public function getFrequency() {
         return $this->frequency;
     }
 
@@ -357,8 +362,7 @@ class Card
      *
      * @return Card
      */
-    public function setDescription($description)
-    {
+    public function setDescription($description) {
         $this->description = $description;
 
         return $this;
@@ -369,19 +373,16 @@ class Card
      *
      * @return string
      */
-    public function getDescription()
-    {
+    public function getDescription() {
         return $this->description;
     }
-    
-    
-     /**
+
+    /**
      * Sets file.
      *
      * @param string $file
      */
-    public function setFile($file)
-    {
+    public function setFile($file) {
         $this->file = $file;
     }
 
@@ -390,10 +391,10 @@ class Card
      *
      * @return string
      */
-    public function getFile()
-    {
+    public function getFile() {
         return $this->file;
     }
+
     /**
      * Sets popularity.
      *
@@ -414,11 +415,27 @@ class Card
     
     
     
-    public function calculateValue()
-    {
+     /**
+     * Sets locked.
+     *
+     * @param int $locked
+     */
+    public function setLocked($locked = null) {
+        $this->locked = $locked;
+    }
+
+    /**
+     * Get locked.
+     *
+     * @return int
+     */
+    public function getLocked() {
+        return $this->locked;
+    }
+
+    public function calculateValue() {
         $this->cardvalue = $this->karma + $this->sex + $this->sanity - ($this->turns * 10);
         $this->frequency = 100 - $this->karma + $this->sex + $this->sanity - ($this->turns * 10);
     }
-    
-}
 
+}

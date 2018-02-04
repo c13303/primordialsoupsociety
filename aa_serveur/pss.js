@@ -309,7 +309,7 @@ wss.on('connection', function aconnection(ws, req) {
         
         /* check if connected already, KICKING HIM */
         for (i = 0; i < clients.length; i++) { 
-            if (clients[i].user == this.user) {
+            if (clients[i].user === this.user) {
                 this.send(JSON.stringify({'user': 'serveur', 'message': 'utilisateur déjà connecté ! fermant connexion ' + this.user + '! '}));
                 ws.cheater('refus de connexion : utilisateur déjà connecté !');
                 this.close();
@@ -321,7 +321,7 @@ wss.on('connection', function aconnection(ws, req) {
         ws.send(JSON.stringify({fullmap: fullmap}));
         
         /* reload is deck */
-        ws.updateDeck();     
+       // ws.updateDeck();     
        
         this.send(JSON.stringify({'user': 'serveur', 'message': 'coucou ' + this.user + '! '}));
         clients.push(this); /* add to client list */
@@ -329,30 +329,37 @@ wss.on('connection', function aconnection(ws, req) {
         map.checkMap(this);
         map.whosthere(this);      
         
-    }
+    };
     ws.cheater = function cheater(message){
         ws.send(JSON.stringify({cheater: message}));
-    }
+    };
     
     ws.updateSession = function updateSession() {
         var sessiondata = JSON.stringify(ws.session);
         var query = 'UPDATE fos_user SET sessiondata = ? WHERE id = ?';       
         var info = connection.query(query, [sessiondata,ws.id],function (err, rows, fields) {         
         });
-    }
+    };
         
+    ws.sendDeck = function(){
+        ws.send(JSON.stringify({deck: ws.deck}));  
+    };
     
     // update player deck
-    ws.updateDeck = function updateDeck() {
-        var query = 'SELECT * FROM deck WHERE user_id = ?';
+    ws.updateDeck = function updateDeck(callback) {
+        cardIndex.reload();
+        var query = 'SELECT * FROM deck WHERE user_id = ? ORDER BY card_id ASC';
         var info = connection.query(query, this.id,function (err, rows, fields) {
-            ws.deck = rows;
+            ws.deck =  tools.formatAllDeck(rows,cardIndex.cardIndex);
+            if (ws[callback] && typeof (ws[callback]) === "function") {
+                ws[callback]();
+            }
         });
-    }
+    };
     
-    ws.getMyCards = function getMyCards(){
-         ws.send(JSON.stringify({deck: ws.session.deck}));
-    }
+   
+    
+
 
 
     /*
@@ -393,19 +400,20 @@ wss.on('connection', function aconnection(ws, req) {
     /*
      * INIT DUEL SERVER SIDE
      */
-    ws.initDuel = function initDuel(json) { //commande duel,id        
-        
-        console.log('duel init : ' + ws.id + ' vs ' + json.value);
+    ws.initDuel = function initDuel(json) { //commande duel,id    
+        // console.log('duel init : ' + ws.id + ' vs ' + json.value);
         var adversaire_id = json.value;
-
         cardIndex.reload();
         ws.adversaire = adversaire_id;
         ws.session.isHost = 1;  
-        
+        ws.updateDeck('initDuel2');        
+    }
+    
+    ws.initDuel2 = function initDuel2(){
         /* duel mode off or online */
-        if (map.isOnline(clients, adversaire_id)) {
+        if (map.isOnline(clients, ws.adversaire)) {
             console.log('online duel');
-            map.findClient(clients, adversaire_id);
+            map.findClient(clients, ws.adversaire);
             ws.session.isOnline = 1;
                       
             /* TODO SEND ALL DATA TO WS OPPONENT */
@@ -417,15 +425,17 @@ wss.on('connection', function aconnection(ws, req) {
             
         } else {
             console.log('offline duel');
-            ws.setEnnemy(adversaire_id);
+            ws.setEnnemy(ws.adversaire);
             ws.session.isOnline = 0;
         }
     }
+    
+    
 
     // init offline duel step 2 : get ennemy
     ws.setEnnemy = function setEnnemy(id) {
         var query = 'SELECT id,username,x,y,speak,level,karma,sex,sanity,life,money,file FROM fos_user WHERE id = ? LIMIT 0,1';
-        var info = connection.query(query, id, function (err, rows, fields) {
+        connection.query(query, id, function (err, rows, fields) {
             ws.session.ennemy = rows[0];
             ws.loadEnnemyDeck();
         });
@@ -435,20 +445,21 @@ wss.on('connection', function aconnection(ws, req) {
     // init offline duel step 3 : get ennemy deck
     ws.loadEnnemyDeck = function loadEnnemyDeck() {  /// ofline ennemy deck
         var query = 'SELECT * FROM deck WHERE user_id = ?';
-        var info = connection.query(query, this.adversaire, function (err, rows, fields) {            
+        connection.query(query, this.adversaire, function (err, rows, fields) {            
             if (!ws.deck.length || !rows.length) {
                 console.log('error : empty deck');
-            } else {                
+            } else {         
                 
+                ws.session.ennemyDeck =  tools.formatAllDeck(rows,cardIndex.cardIndex);
                 /*
                  * INIT THE DUEL CLIENT
                  */
                 ws.session.player = ws.player;
                 ws.session.player.sessiondata = ws.session.player.ip = '';  /// le player session est cleané
                 ws.session.deck = tools.shuffle(ws.deck);
-                ws.session.ennemyDeck = tools.shuffle(rows);
-                ws.session.hand = tools.sixFirst(ws.session.deck,cardIndex.cardIndex);
-                ws.session.ennemyHand = tools.sixFirst(ws.session.ennemyDeck,cardIndex.cardIndex);
+                ws.session.ennemyDeck = tools.shuffle(ws.session.ennemyDeck);
+                ws.session.hand = tools.sixFirst(ws.session.deck);
+                ws.session.ennemyHand = tools.sixFirst(ws.session.ennemyDeck);
                 ws.session.duelTurn = 1;
                 ws.session.duelmode = 1;
                 ws.session.busy = 1;
@@ -505,17 +516,16 @@ wss.on('connection', function aconnection(ws, req) {
             var cardInHand = Hand[i];
             if (cardInHand && cardInHand.deck_id === id_hand) {
                 /* find card in index */
-                var card = cardIndex.cardIndex[cardInHand.id];
+                var card = cardInHand;
                 // removeCardFromHand
                 Hand.splice(i,1);
                 break;
             }
         }
-        if (!card) {
+        if (!card) {            
             ws.cheater('error : card not found');
             return(null);
         }
-
         /* set this card on table */
         ws.session.table[turn] = {
             id: card.id,
@@ -525,13 +535,14 @@ wss.on('connection', function aconnection(ws, req) {
             defender : defender,
             turn: card.turns,
         };
-
         /* increment turn */
         ws.session.duelTurn++;
         
+        /* turn table card expire */
+        
 
         /* load shield and attacks */
-        var damage = tools.calculateStrike(attacker,defender, ws.session.table, cardIndex.cardIndex);   
+        var damage = tools.calculateStrike(attacker,defender, ws.session.table);   
         if(damage.totalDamage>0){            
             defender.life-= damage.totalDamage;             
         }
@@ -570,8 +581,6 @@ wss.on('connection', function aconnection(ws, req) {
     ws.IAPlay = function IAPlay(){        
         var randomcard = Math.floor((Math.random() * ws.session.ennemyHand.length));        
         console.log('IA '+ws.session.ennemy.username+' is playing card : '+randomcard+'/'+ws.session.ennemyHand.length);
-        for(i=0;i<ws.session.ennemyHand.length;i++){
-        }
         ws.playCard(ws.session.ennemyHand[randomcard].deck_id,null);        
     }
 
@@ -617,7 +626,7 @@ wss.on('connection', function aconnection(ws, req) {
                 }
                 
                 if (json.command === 'getmycards') {
-                    ws.getMyCards();
+                     ws.updateDeck('sendDeck');
                 }
             } // end busy
             

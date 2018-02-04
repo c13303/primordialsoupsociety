@@ -13,22 +13,14 @@ module.exports = {
         return arr;
     },
     shuffle: function (array) {
-        var currentIndex = array.length, temporaryValue, randomIndex;
-
-        // While there remain elements to shuffle...
-        while (0 !== currentIndex) {
-
-            // Pick a remaining element...
+        var currentIndex = array.length, temporaryValue, randomIndex;        
+        while (0 !== currentIndex) {            
             randomIndex = Math.floor(Math.random() * currentIndex);
-            currentIndex -= 1;
-
-            // And swap it with the current element.
+            currentIndex -= 1;            
             temporaryValue = array[currentIndex];
             array[currentIndex] = array[randomIndex];
             array[randomIndex] = temporaryValue;
         }
-
-
         return array;
     },
     describeCardEffet: function (card) {
@@ -57,10 +49,17 @@ module.exports = {
         return(desc);
 
     },
-    sixFirst: function (deck,cardIndex) { /// building the hand 6 Card for front play        
+    sixFirst: function (deck) { /// building the hand 6 Card for front play         
+        var result = [];
+        for (i = 0; i < 6; i++) {           
+            result.push(deck[i]);
+        }
+        return(result);
+    },
+    formatAllDeck: function (deck,cardIndex) {
         var index = cardIndex;
         var result = [];
-        for (i = 0; i < 6; i++) {
+        for (i = 0; i < 30; i++) {
             var card_id = deck[i].card_id;
             var deck_id = deck[i].id;
             result.push(index[card_id]);
@@ -69,7 +68,7 @@ module.exports = {
         }
         return(result);
     },
-    calculateStrike(attacker,defender,table,cardIndex){        
+    calculateStrike(attacker,defender,table){        
         
         var result = {};
         
@@ -85,8 +84,7 @@ module.exports = {
         
         for (i = 0; i < table.length; i++) {
             if (table[i]) {
-                var id_card = table[i].id;
-                var card = cardIndex[id_card];
+                var card = table[i].card;
                 var cardPosee = table[i];
                 if (card.special_name) {
                     effects.push(card.special_name);

@@ -21,7 +21,7 @@ body{
     max-width: 1320px;
     position: relative;
     margin: auto;
-    overflow: hidden;
+    overflow-x: hidden;
 font-family: 'Source Sans Pro', sans-serif;
 }
 
@@ -35,7 +35,6 @@ h2{
     margin-top: 20px;
 }
 #stats div{
-    display:inline;
 }
 label{
     display:inline;
@@ -59,6 +58,13 @@ label{
     height: 810px;
     background: #bfa182;    
     position: relative;
+}
+.fullpage{
+    width: 840px;
+    height: 810px;
+    background: white;    
+    position: absolute;
+    z-index:20;
 }
 .instructions{
     font-size:12px;
@@ -166,7 +172,7 @@ iframe{
     width:200px;    
     bottom:0;
     padding: 10px;
-    background:green; 
+    background:#757575; 
 
 }
 .card{
@@ -378,7 +384,15 @@ cursor: pointer;
 .life::before{
     content:"LIFE : ";
 }
-
+.karma{
+    color:#306ecb;
+}
+.sex{
+    color:#db5739;
+}
+.sanity{
+    color:#8fa741;
+}
 .karma::before{
     content:"KARMA : ";
 }
@@ -412,19 +426,26 @@ table { border-collapse:collapse }
 }
 #scene{
     position: absolute;
-    height: 200px;
-    top: 360px;
-    width: 660px;
-    margin-left:20px;
+    height: 190px;
+    padding-top:10px;
+    top: 364px;
+    width: 820px;
+    /* z-index: -1; */
+    background: #c3c3c3;
+    margin-left: -20px;
+    padding-left: 20px;
+    
 }
 #sceneO{
     position: absolute;
-    height: 200px;
+    height: 190px;
+    padding-top:10px;
     top: 150px;
-    width: 660px;
-    right:0px;
-    z-index:-1;
-    margin-left:20px;
+    width: 820px;
+    /* z-index: -1; */
+    background: #b36f6f;
+    margin-left: -20px;
+    padding-left: 20px;
 }
 #dueldesc{
     position: absolute;
@@ -452,6 +473,14 @@ table { border-collapse:collapse }
     background-repeat: no-repeat;
     background-position: left;
     width: 20px;
+    display: inline-block;
+}
+.ic2{
+    background-size: 10px 10px;
+    padding-left: 17px;
+    background-repeat: no-repeat;
+    background-position: left;
+    width: 200px;
     display: inline-block;
 }
 .isex{
@@ -522,4 +551,11 @@ form label{
     height: 64px;
     width: 200px;
     display: block;
+}
+.centered{
+    text-align:center;
+}
+
+.clic{
+    cursor:pointer;
 }

@@ -5,14 +5,9 @@
         <div id="container">
             <h1>CARD CRAFTING</h1>
 
-
-            {{ form(cardForm) }}
-
-
-
-        </div>
-
-        <div class="editimage">
+            {% if(user.mana) %}
+                {{ form(cardForm) }}
+                <div class="editimage">
             Sensibilité couleur (clair <-> foncé)
             <input type='range' min="0" max="255" step="1"  data-orientation="horizontal" id="sensitivity" value="109" data-tr='109' data-tg='111' data-tb='101'/>
 
@@ -21,6 +16,14 @@
             <input type="file" id="upfile" value='telecharger une image du disque'/> 
             <button id="color" class="hidden">color</button>
         </div>
+            {% else %}
+                Vous n'avez pas assez de mana pour forger une carte ! 
+            {% endif %}
+
+
+        </div>
+
+        
     </div>
 {% endblock %}
 

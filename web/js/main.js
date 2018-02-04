@@ -2,6 +2,7 @@
 var currentPCase = 0;
 var currentOCase = 0;
 var currentHCase = 0;
+var currentMCase = 0;
 var gridComplete = 0;
 
 function matrix(rows, cols, defaultValue) {
@@ -40,6 +41,11 @@ function positionCard(isO) {
            $(this).appendTo(select);
            currentHCase++;
         }
+        if(isO === 'M'){
+            var select = '#mycards .gridsquare' + currentMCase;
+           $(this).appendTo(select);
+           currentMCase++;
+        }
     });
 
 }
@@ -67,9 +73,9 @@ var id = $('#nom').data('id');
 
 function updateStats(player,opponent) {
     $('#pstats .life').html(player.life);
-    $('#pstats .karma').html(player.karma);
-    $('#pstats .sex').html(player.sex);
-    $('#pstats .sanity').html(player.sanity);    
+    $('#pstats .bkarma').html(player.karma);
+    $('#pstats .bsex').html(player.sex);
+    $('#pstats .bsanity').html(player.sanity);    
     $('#ostats .life').html(opponent.life);
     $('#ostats .karma').html(opponent.karma);
     $('#ostats .sex').html(opponent.sex);
@@ -79,13 +85,12 @@ function updateStats(player,opponent) {
 /* HTML de la CARTE */
 function makeCardHtml(data,someclass){
     var html = '';    
-    html += '<div id="card'+data.deck_id+'" class="card handcard command '+someclass+'" data-command="playcard" data-value="' + data.deck_id + '">';
+    html += '<div id="card'+data.deck_id+'" class="card handcard '+someclass+'" data-command="playcard" data-value="' + data.deck_id + '">';
     html += '<div class="name">' + data.name + '</div>';
     html += '<div class="carddesc">' + data.description + '</div>';
     html += '<div class="cardeffect">' + data.effect + '</div>';
     html += '</div>';
-     $('#positionner').append(html);
-    
+     $('#positionner').append(html);    
 }
 
 /*
@@ -114,7 +119,7 @@ function duelInit(message) {
     setTimeout(function () {
         for (i = 0; i < 6; i++) {
             if (data.hand[i]) {
-                makeCardHtml(data.hand[i], 'playerhandcard waitforposition activehandcard');
+                makeCardHtml(data.hand[i], 'command playerhandcard waitforposition activehandcard');
                 positionCard('H');
 
             }
@@ -123,7 +128,7 @@ function duelInit(message) {
         for (i = 0; i < message.data.table.length; i++) {
             var cardOnTable = message.data.table[i];
             if (cardOnTable && cardOnTable.attacker.id === player.id) {
-                makeCardHtml(cardOnTable.card, 'playerhandcard waitforposition');
+                makeCardHtml(cardOnTable.card, 'waitforposition');
             }
             positionCard(null);
             if (cardOnTable && cardOnTable.attacker.id !== player.id) {
@@ -162,19 +167,24 @@ function duelUpdate(message) {
     
     $('#turn').html(message.data.duelTurn);
     var text = '';
-    if (message.data.last.totalDamage > 0) { // classic damage
-        var damage = message.data.last;
+    var damage = message.data.last;
+    
+    if (damage.totalDamage > 0) { // classic damage
+        
         text += '<p class="action">\n\
                 <span class="playername">' + damage.attacker + '</span> a infligé ' + damage.totalDamage + ' \n\
                 points de dommages à <span class="playername">' + damage.defenser + '</span> avec <span class="cardname">' + damage.card.name + '</span> ! </p>';
                     }
     if (message.data.last.totalDamage < 0) { // contre-damaged
-        var damage = message.data.last;
+        
         text += '<p class="action"><span class="playername">' + damage.attacker + '</span> s\'est infligé '
                                 + damage.totalDamage + ' points de dommages en essayant de toucher <span class="playername">' + damage.defenser + '</span>\n\
                  avec <span class="cardname">' + damage.card.name + '</span> ! </p>';
                     }
     
+    $('#ckarma').html(damage.totalKar);
+    $('#csex').html(damage.totalSex);
+    $('#csanity').html(damage.totalSan);
     
     text += "<p>C'est à <span class='playername'>" + nextAttacker.username + "</span> de jouer.</p>";
     $('#dueldesc').html(text);
@@ -186,7 +196,14 @@ function duelUpdate(message) {
 }
 
 
-
+function updateCardManager(cards){
+    $('#cardmanager').show();
+    currentMCase = 0;
+    for(i=0;i<cards.length;i++){
+         makeCardHtml(cards[i], 'playerhandcard waitforposition managercard');
+         positionCard('M');
+    }
+}
 
 function completeIframe(){
     $('#loader').hide();
@@ -225,6 +242,7 @@ $(document).ready(function () {
     gengrid(6, 1, $('#scene'));
     gengrid(6, 1, $('#sceneO'));
     gengrid(6, 1, $('#hand'));
+    gengrid(6, 5, $('#mycards'));
 
     /* connect est lancé a lissue des 3 gengrid */
     function gengrid(n, j, div) {
@@ -232,9 +250,8 @@ $(document).ready(function () {
         var macase = 0;
         for (var i = 0; i < j; i++) {
             output += '<div class="row row' + i + '">';
-            for (k = 0; k < n; k++) {
-                
-                output += '<div class="gridsquare gridsquare' + macase + '"></div>';
+            for (k = 0; k < n; k++) {                
+                output += '<div class="gridsquare gridsquare' + macase + '" title="' + macase + '"></div>';
                 macase++;
             }
             output += '</div>';
@@ -361,6 +378,11 @@ $(document).ready(function () {
             /*full map gros */
             if (message.fullmap) {
                 fullmap = message.fullmap;
+            }
+            
+            /*update card manager */
+            if(message.deck){
+                updateCardManager(message.deck);
             }
             
 
@@ -532,7 +554,11 @@ $(document).ready(function () {
             $('.otherpeople').animate({opacity: 1}, 700, 'linear');
         });
         
-        
+        $('#closecardmanager').click(function(){
+            $('#positionner').html('');
+            $('.managercard').remove();
+            $('#cardmanager').hide();
+        });
         
     }
 

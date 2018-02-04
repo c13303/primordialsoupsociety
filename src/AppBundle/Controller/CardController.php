@@ -81,13 +81,13 @@ class CardController extends Controller {
     }
     
     /**
-     * @Route("/craft", name="craft")
+     * @Route("/craft/", name="craft")
      */
     public function craftCardAction(Request $request) {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
         $user = $this->getUser();
         $em = $this->getDoctrine()->getManager();
-        $card_id = $request->request->get('idcard'); // edit mode
+        $card_id = $request->query->get('idcard'); // edit mode
         if($card_id){
             $card = $em->getRepository('AppBundle:Card')->findOneById($card_id);
         }else{
@@ -105,7 +105,6 @@ class CardController extends Controller {
                 $newfile = $newfile['file'];
                 /* upload part */
                 if ($newfile) {
-
                     $img = str_replace('data:image/png;base64,', '', $newfile);
                     $img = str_replace(' ', '+', $img);
                     $fileData = base64_decode($img);

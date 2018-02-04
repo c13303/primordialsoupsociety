@@ -19,12 +19,17 @@
         </div>
         <div id="stats" class="">                        
             <div id="life"><label>life:</label><span class="value">{{ user.life }}</span></div>
-            <div id="kama"><label>karma:</label><span class="value">{{ user.karma }}</span></div>
-            <div id="money"><label>money:</label><span class="value">{{ user.money }}</span></div>
-            <div id="sanity"><label>sanity:</label><span class="value">{{ user.sanity }}</span></div>
-            <div id="score"><label>score:</label><span class="value">{{ user.score }}</span></div>
-            <div id="level"><label>level:</label><span class="value">{{ user.level }}</span></div>
-
+            <div id="score"><label>score:</label><span class="value">{{ user.score }} </span></div>
+            <div id="level"><label>level:</label><span class="value">{{ user.level }}</span></div>            
+            <div id="money"><label>money:</label><span class="value">{{ user.money }}</span> € </div>
+            <!--<h2>Constitution</h2>
+            <div id="kama" class="karma ikar ic2"><span class="value">{{ user.karma }}</span></div>
+            <div id="sex" class="sex isex ic2"><span class="value">{{ user.sex }}</span></div>            
+            <div id="sanity" class="sanity isan ic2"><span class="value">{{ user.sanity }}</span></div> -->
+            
+            <div id="ckarma" class="karma ikar ic2"></div>
+            <div id="csex" class="sex isex ic2"></div>
+            <div id="csanity" class="sanity isan ic2"></div>
             <br/><a href="{{ path('edit_user',{'user':user.id}) }}" class="fullload">editer mon personnage</a>
             <br/><a href="#card" class="cardmanage command" data-command="getmycards" data-value="1">gérer mes cartes</a>
             <br/><a href="#card" class="cardmanage command" data-command="mycreatures" data-value="1">gérer mes créatures</a>
@@ -52,8 +57,11 @@
         {{ render(controller("FOSUserBundle:Security:login")) }}
     {% endif %}
     {% if user %}
-        <div id="cardmanager" class="hidden">
-            
+        <div id="cardmanager" class="hidden fullpage">
+            <div id="closecardmanager" class="clic">Fermer</div>
+            <div class="centered">
+                <div id="mycards"></div>
+            </div>
         </div>
         <div id="duel">
             <div id="turn"></div>
@@ -65,7 +73,7 @@
         </div>
         <div id="map" class="infobox">
             <input type="hidden" id="updatemap" value="{{ updatemap }}" data-x="{{user.X}}" data-y="{{user.Y}}">
-            
+
             <div id="duelbg"></div>
             <div id="mapimage" data-folder="{{ images_folder }}">
                 <img id="imagebg" class="hidden" src='' />

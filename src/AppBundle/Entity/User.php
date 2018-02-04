@@ -57,6 +57,15 @@ class User extends BaseUser
      */
     private $life;
     
+    
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="mana", type="integer", nullable=true)
+     */
+    private $mana;
+    
+    
     /**
      * @var int
      *
@@ -147,7 +156,7 @@ class User extends BaseUser
      *
      * @ORM\Column(name="sessiondata", type="text", length=65635,nullable=true)
      */
-    private $sesiondata;
+    private $sessiondata;
     
     
     /**
@@ -298,6 +307,32 @@ class User extends BaseUser
         return $this->life;
     }
 
+    
+     /**
+     * Set mana
+     *
+     * @param integer $mana
+     *
+     * @return User
+     */
+    public function setMana($mana)
+    {
+        $this->mana = $mana;
+
+        return $this;
+    }
+
+    /**
+     * Get mana
+     *
+     * @return integer
+     */
+    public function getMana()
+    {
+        return $this->mana;
+    }
+    
+    
     /**
      * Set karma
      *
