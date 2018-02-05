@@ -314,7 +314,7 @@ a{
     display: inline-block;
     position: absolute;
     cursor: pointer;
-    background: #757575;
+    background: #b36f6f;
     padding: 10px;
     margin: 10px;
     z-index: 20;
@@ -368,8 +368,9 @@ cursor: pointer;
     position: absolute;
     background: white;
     width: 800px;
-        padding: 20px;
+    padding: 20px;
     height: 800px;
+    line-height: 12px;
 }
 
 
@@ -402,7 +403,9 @@ cursor: pointer;
 .sanity::before{
     content:"SANITY : ";
 }
-
+.cardname{
+    font-weight:bold;
+}
 #ostats{
     margin-top: 400px;
     margin-left: 20px;
@@ -431,7 +434,7 @@ table { border-collapse:collapse }
     top: 364px;
     width: 820px;
     /* z-index: -1; */
-    background: #c3c3c3;
+    background: #757575;
     margin-left: -20px;
     padding-left: 20px;
     
@@ -465,7 +468,6 @@ table { border-collapse:collapse }
     padding: 10px;
     /* float: left; */
     position: absolute;
-    cursor:pointer;
 }
 .ic{
     background-size: 10px 10px;
@@ -558,4 +560,39 @@ form label{
 
 .clic{
     cursor:pointer;
+}
+.command{
+    cursor:pointer;
+}
+#reload{
+    height:150px;
+    width:100px;
+    background: #db5739;
+    padding:10px;    
+}
+#reload.disabled{
+    background:#CCC;
+    color:#CCC;
+}
+
+.duelmode{
+    display:none;
+}
+.tiragecontainer{
+    position: absolute;
+    top: 600px;
+    left: 50px;
+}
+
+#skipturn{
+    padding:10px;
+    background:white;
+    margin-top:20px;
+}
+
+.card.Damage .name{
+    color:  #ce0000;
+}
+.card.Buff .name{
+    color: #306ecb;
 }

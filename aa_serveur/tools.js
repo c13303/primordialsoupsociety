@@ -39,11 +39,10 @@ module.exports = {
         }
         if (card.sex) {
             desc += '<div class="isex ic">'+card.sex + '</div>';
-        }
+        }    
         
-        if (card.turns) {
-            desc += ' <div class="tur ic">' + card.turns + ' </div>';
-        }
+       
+        
         
         desc += '</div>';
         return(desc);
@@ -57,7 +56,7 @@ module.exports = {
         return(result);
     },
     formatAllDeck: function (deck,cardIndex) {
-        var index = cardIndex;
+        var index = JSON.parse(JSON.stringify(cardIndex));
         var result = [];
         for (i = 0; i < 30; i++) {
             var card_id = deck[i].card_id;
@@ -67,6 +66,22 @@ module.exports = {
             result[i].deck_id = deck_id;
         }
         return(result);
+    },
+    getPlayedCardsFromTable(table) {
+        var cards = [];
+        for (i = 0; i < table.length; i++) {
+            if (table[i] && table[i].card) {
+                cards.push(table[i].card.id);
+            }
+        }
+        return(cards);
+    },
+    getIdCardsFromHand(hand){
+        var cards = [];
+        for(i=0;i<hand.length;i++){
+            cards.push(hand[i].id);
+        }
+        return(cards);
     },
     calculateStrike(attacker,defender,table){        
         
@@ -83,7 +98,7 @@ module.exports = {
         var effects = [];  
         
         for (i = 0; i < table.length; i++) {
-            if (table[i]) {
+            if (table[i] && table[i].card) {
                 var card = table[i].card;
                 var cardPosee = table[i];
                 if (card.special_name) {
@@ -100,6 +115,8 @@ module.exports = {
                     result.defenseSex += card.sex;
                     result.defenseSan += card.sanity;
                 }
+            } else {
+                var card = null;
             }
         }
         
@@ -122,18 +139,33 @@ module.exports = {
         }
         if(result.attackSan){
             result.totalSan = result.attackSan - result.defenseSan - (result.defenseKar * 2);
-        }
-        
-        result.totalDamage = result.totalKar + result.totalSex + result.totalSan;
-        
+        }        
+        result.totalDamage = result.totalKar + result.totalSex + result.totalSan;        
         result.effects = effects;
         result.attacker = attacker.username;
-        result.defenser = defender.username;
-        
-        result.card = card;
-        
+        result.defenser = defender.username;        
+        result.card = card;        
         return(result);
-    }
+    },
+    expiredCards(table){
+        console.log('filtring table');
+        var toRemove = [];
+        for (i = 0; i < table.length; i++) {            
+            if(table[i] && table[i].card){
+                table[i].card.turns--;
+                if(table[i].card.turns < 0){
+                    toRemove.push(i);
+                    table[i].card=null;    
+                   
+                }                
+            }
+        }
+        var toreturn = {
+            newTable : table,
+            cardsToRemove : toRemove
+        };
+        return(toreturn);
+    },
 
 };
 

@@ -4,6 +4,8 @@ var currentOCase = 0;
 var currentHCase = 0;
 var currentMCase = 0;
 var gridComplete = 0;
+var updatedTable = [];
+var playerId = 0;
 
 function matrix(rows, cols, defaultValue) {
     var arr = [];
@@ -20,31 +22,30 @@ function matrix(rows, cols, defaultValue) {
 
 
 function positionCard(isO) {
-   
+
     var card = $('.waitforposition');
     card.each(function () {
-        
+
         $(this).removeClass('waitforposition');
         if (!isO) {
-             var select = '#scene .gridsquare' + currentPCase;
+            var select = '#scene .gridsquare' + currentPCase;
             $(this).appendTo(select);
             currentPCase++;
         }
         if (isO === 'O') {
             var select = '#sceneO .gridsquare' + currentOCase;
-           $(this).appendTo(select);
-
+            $(this).appendTo(select);
             currentOCase++;
         }
         if (isO === 'H') {
             var select = '#hand .gridsquare' + currentHCase;
-           $(this).appendTo(select);
-           currentHCase++;
+            $(this).appendTo(select);
+            currentHCase++;
         }
-        if(isO === 'M'){
+        if (isO === 'M') {
             var select = '#mycards .gridsquare' + currentMCase;
-           $(this).appendTo(select);
-           currentMCase++;
+            $(this).appendTo(select);
+            currentMCase++;
         }
     });
 
@@ -58,48 +59,44 @@ function positionCard(isO) {
 function isolateOpponent(id_target) {
     var found = 0;
     $('.otherpeople').each(function () {
-        if ($(this).data('id') != id_target) {
-            $(this).animate({opacity: 0.0}, 700, 'linear');           
+        if ($(this).data('id') !== id_target) {
+            $(this).animate({opacity: 0.0}, 700, 'linear');
         }
-    })    
-    $('#player'+id_target).css('margin-top','0px');
-    if(!$('#player'+id_target).data('id')){
-        alert('opponent not here '+id_target);
+    });
+    $('#player' + id_target).css('margin-top', '0px');
+    if (!$('#player' + id_target).data('id')) {
+        alert('opponent not here ' + id_target);
     }
 }
 
 var allowedToPlay = 0;
 var id = $('#nom').data('id');
 
-function updateStats(player,opponent) {
-    $('#pstats .life').html(player.life);
-    $('#pstats .bkarma').html(player.karma);
-    $('#pstats .bsex').html(player.sex);
-    $('#pstats .bsanity').html(player.sanity);    
-    $('#ostats .life').html(opponent.life);
-    $('#ostats .karma').html(opponent.karma);
-    $('#ostats .sex').html(opponent.sex);
-    $('#ostats .sanity').html(opponent.sanity);
+function updateStats(player, opponent) {
+    $('#pstats .life').html(player.life);    
+    $('#ostats .life').html(opponent.life);    
 }
 
 /* HTML de la CARTE */
-function makeCardHtml(data,someclass){
-    var html = '';    
-    html += '<div id="card'+data.deck_id+'" class="card handcard '+someclass+'" data-command="playcard" data-value="' + data.deck_id + '">';
+function makeCardHtml(data, someclass) {
+    var html = '';
+    html += '<div id="card' + data.deck_id + '" class="card turnposed'+data.turnPosed+' handcard ' + someclass + ' '+data.type+'" \n\
+data-command="playcard" data-turns="'+data.turns+'" data-value="' + data.deck_id + '">';
     html += '<div class="name">' + data.name + '</div>';
     html += '<div class="carddesc">' + data.description + '</div>';
     html += '<div class="cardeffect">' + data.effect + '</div>';
+    html += ' <div class="tur ic">' + data.turns + '</div>';
     html += '</div>';
-     $('#positionner').append(html);    
+    $('#positionner').append(html);
 }
 
 /*
  * Opponent pose 1 Carte
  */
-function playerCard(card){
-    var html = makeCardHtml(card,'opponentTableCard waitforposition');   
+function playerCard(card) {
+    var html = makeCardHtml(card, 'opponentTableCard waitforposition turnactive');
     positionCard('O');
-
+    
 }
 
 /*
@@ -109,133 +106,167 @@ function duelInit(message) {
     var data = message.data;
     var opponent = message.data.ennemy;
     var player = message.data.player;
+    playerId = player.id;
     $('.mapStuff').hide();
     $('.duelstuff').show();
     $('#duel').show();
-    
+    $('.duelmode').show();
+    $('.mainonly').hide();
     /*
      *  Pose la main du player 
      */
     setTimeout(function () {
-        for (i = 0; i < 6; i++) {
-            if (data.hand[i]) {
-                makeCardHtml(data.hand[i], 'command playerhandcard waitforposition activehandcard');
-                positionCard('H');
+        updateHand(data.hand);
+        updateTable(data.table);
+        duelUpdate(message);
+    }, 1000); // [timer sinon ça chiale O_?] 
 
-            }
-        }
-        /* Pose les cartes on the table */
-        for (i = 0; i < message.data.table.length; i++) {
-            var cardOnTable = message.data.table[i];
-            if (cardOnTable && cardOnTable.attacker.id === player.id) {
-                makeCardHtml(cardOnTable.card, 'waitforposition');
+
+}
+function updateTable(table) {
+   
+    currentPCase = currentOCase = 0;
+    $('.turnactive').remove();
+    /* Pose les cartes on the table */
+    for (i = 0; i < table.length; i++) {
+        var cardOnTable = table[i];
+        if (cardOnTable && cardOnTable.card) {
+            if (cardOnTable.attacker.id === playerId) {
+                makeCardHtml(cardOnTable.card, 'waitforposition turnactive');
             }
             positionCard(null);
-            if (cardOnTable && cardOnTable.attacker.id !== player.id) {
-                makeCardHtml(cardOnTable.card, 'waitforposition');
+            if (cardOnTable.attacker.id !== playerId) {
+                makeCardHtml(cardOnTable.card, 'waitforposition turnactive');
             }
             positionCard('O');
         }
-
-        duelUpdate(message);
-
-    }, 1000); // [timer sinon ça chiale O_?]
-    
-
-
-    
-    
-    
+    }
 }
+
+function updateHand(hand) {
+    $('.playerhandcard').remove();
+    currentHCase = 0;
+    for (i = 0; i < hand.length; i++) {
+        if (hand[i]) {
+            makeCardHtml(hand[i], 'command playerhandcard waitforposition activehandcard');
+            positionCard('H');
+        }
+    }
+}
+
+
 
 function duelUpdate(message) {
     var data = message.data;
     var opponent = message.data.ennemy;
     var player = message.data.player;
+    var damage = message.data.last;
+
     allowedToPlay = data.allowedToPlay;
-    if(allowedToPlay){
+
+    if (allowedToPlay) { /// adversaire = IA/OPPONENT, prochain tour = player
+        $('#self').css('border','10px solid #1fe01f');
+        $('.otherpeople').css('border','none');
         $('.playerhandcard').addClass('command').addClass('activehandcard');
+        $('#reload').removeClass('disabled').addClass('command');
         var nextAttacker = player;
         var nextDefender = opponent;        
-    } else{
+        $('#oakarma').html(damage.attackKar);
+        $('#oasex').html(damage.attackSex);
+        $('#oasanity').html(damage.attackSan);
+        $('#odkarma').html(damage.defenseKar);
+        $('#odsex').html(damage.defenseSex);
+        $('#odsanity').html(damage.defenseSan);
+        
+    } else {  /// adversaire = PLAYER, prochain tour = adversaire
+        $('.otherpeople').css('border','10px solid #1fe01f');
+        $('#self').css('border','none');
+        $('#reload').addClass('disabled').removeClass('command');
         $('.playerhandcard').removeClass('command').removeClass('activehandcard');
         var nextAttacker = opponent;
         var nextDefender = player;
+        
+        $('#akarma').html(damage.attackKar);
+        $('#asex').html(damage.attackSex);
+        $('#asanity').html(damage.attackSan);
+        $('#dkarma').html(damage.defenseKar);
+        $('#dsex').html(damage.defenseSex);
+        $('#dsanity').html(damage.defenseSan);
+        
     }
-    
-    updateStats(player, opponent);
-    
+    updateStats(player,opponent);  
+
     $('#turn').html(message.data.duelTurn);
+       
     var text = '';
-    var damage = message.data.last;
     
+    if (damage.card) {
+        text += '<p class="action">\n\<span class="playername">' + damage.attacker + '</span> pose <span class="cardname">' + damage.card.name + '</span><br/>';
+    } else if(damage.attacker){
+        text += '<p class="action">\n\<span class="playername">' + damage.attacker + '</span> passe le tour<br/>';
+    }
+
     if (damage.totalDamage > 0) { // classic damage
-        
-        text += '<p class="action">\n\
-                <span class="playername">' + damage.attacker + '</span> a infligé ' + damage.totalDamage + ' \n\
-                points de dommages à <span class="playername">' + damage.defenser + '</span> avec <span class="cardname">' + damage.card.name + '</span> ! </p>';
-                    }
+        text += '<p class="action"><span class="playername">' + damage.defenser + '</span> reçoit ' + damage.totalDamage + ' points de dommages';
+    }
     if (message.data.last.totalDamage < 0) { // contre-damaged
-        
-        text += '<p class="action"><span class="playername">' + damage.attacker + '</span> s\'est infligé '
-                                + damage.totalDamage + ' points de dommages en essayant de toucher <span class="playername">' + damage.defenser + '</span>\n\
-                 avec <span class="cardname">' + damage.card.name + '</span> ! </p>';
-                    }
+        text += '<p class="action"><span class="playername">' + damage.attacker + '</span> reçoit ' + damage.totalDamage + ' points de dommages';
+    }
+
     
-    $('#ckarma').html(damage.totalKar);
-    $('#csex').html(damage.totalSex);
-    $('#csanity').html(damage.totalSan);
-    
+
     text += "<p>C'est à <span class='playername'>" + nextAttacker.username + "</span> de jouer.</p>";
     $('#dueldesc').html(text);
-    
-   /* whats next ? */
+
+    /* whats next ? */
     if (!allowedToPlay) {
-        $('#dueldesc').append('<p><a href="#e" class="command" data-command="waitForOpponent" data-value="1">OK</a></p>');        
-    }    
+        $('#dueldesc').append('<p><a href="#e" class="command updateturns" data-command="waitForOpponent" data-value="1">OK</a></p>');
+    }
+    
+    updateTable(data.table);
 }
 
 
-function updateCardManager(cards){
+function updateCardManager(cards) {
     $('#cardmanager').show();
     currentMCase = 0;
-    for(i=0;i<cards.length;i++){
-         makeCardHtml(cards[i], 'playerhandcard waitforposition managercard');
-         positionCard('M');
+    for (i = 0; i < cards.length; i++) {
+        makeCardHtml(cards[i], 'playerhandcard waitforposition managercard');
+        positionCard('M');
     }
 }
 
-function completeIframe(){
+function completeIframe() {
     $('#loader').hide();
     $('#map #loadingimage').remove();
     $('#editframe').show();
 }
 
 $(document).ready(function () {
-    
-    
-    
+
+
+
     $('.centralCol').fadeIn(200);
     /*editlink */
-    $('.fullload').click(function () {      
+    $('.fullload').click(function () {
         $('#loader').show();
         var route = $(this).data('route');
         var idmap = $(this).data('idmap');
-        if(route && idmap){
-            var link = route + '?idmap=' + idmap;  
+        if (route && idmap) {
+            var link = route + '?idmap=' + idmap;
             window.location.replace(link);
         }
-        
+
     });
-    
-    
-  
 
 
-    
-   
+
+
+
+
+
     /* DOM READY */
-    
+
     /*
      * copié en HTML pour plus de rapidité
      */
@@ -250,23 +281,23 @@ $(document).ready(function () {
         var macase = 0;
         for (var i = 0; i < j; i++) {
             output += '<div class="row row' + i + '">';
-            for (k = 0; k < n; k++) {                
+            for (k = 0; k < n; k++) {
                 output += '<div class="gridsquare gridsquare' + macase + '" title="' + macase + '"></div>';
                 macase++;
             }
             output += '</div>';
         }
         div.append(output);
-        
+
     }
 
     if ($('#token').val()) {
         connect($('#token').val(), $('#user').val());
     } else {
         console.log('offline mode');
-    } 
-    
-    
+    }
+
+
     var fullmap;
     var environs;
 
@@ -277,7 +308,8 @@ $(document).ready(function () {
         var tox = parseInt(x) + parseInt(range) + 1;
         var fromy = parseInt(y) - parseInt(range) - 1;
         var toy = parseInt(y) + parseInt(range);
-        var environ_x = 0; var environ_y = 0;
+        var environ_x = 0;
+        var environ_y = 0;
         var html;
         for (i = toy; i > fromy; i--) {
             environ_x = 0;
@@ -285,17 +317,16 @@ $(document).ready(function () {
             for (j = fromx; j < tox; j++) {
                 if (i >= 0 && i < 100 && j >= 0 && j < 100) {
                     var outputcase = '';
-                    var thecase = fullmap[j][i];                    
+                    var thecase = fullmap[j][i];
                     if (thecase.file) {
                         var r = 207;
                         var g = 212 - (j + i);
                         var b = 134 - (j + i);
                         html += '<td class="casemap" style="background-color:rgb(' + r + ',' + g + ',' + b + ');" data-y="' + environ_y + '" data-x="' + environ_x + '">';
                         environs[environ_x][environ_y] = thecase;
-                        outputcase = '<div class="hidden caseinfo">'+thecase.nom+'</div>!';
-                    } 
-                    else if (thecase.id && !thecase.file){
-                        var r = 220 ;
+                        outputcase = '<div class="hidden caseinfo">' + thecase.nom + '</div>!';
+                    } else if (thecase.id && !thecase.file) {
+                        var r = 220;
                         var g = 222 - (i);
                         var b = 194 - (j + i);
                         html += '<td style="background-color:rgb(' + r + ',' + g + ',' + b + ');" data-y="' + environ_y + '" data-x="' + environ_x + '">';
@@ -315,38 +346,39 @@ $(document).ready(function () {
             html += '</tr>';
         }
         $('#minimaptable').html(html);
-    }   
-  
+    }
+
 
     function connect(token, user) {
-        
-        /* auth & connexion */        
+
+        /* auth & connexion */
         var ws = new WebSocket('ws://51.15.167.221:8080/' + token + '-' + user);
-        
+
         setTimeout(function () {
             if (ws.readyState != 1) {
                 alert('serveur inaccessible');
             }
-            if($('#updatemap').val()) {
+            if ($('#updatemap').val()) {
                 var obj = {};
                 obj.command = 'updateallmap';
                 obj.value = 1;
                 var json = JSON.stringify(obj);
                 ws.send(json);
                 $('#updatemap').val('');
-                x = $('#updatemap').data('x'); y = $('#updatemap').data('y');
+                x = $('#updatemap').data('x');
+                y = $('#updatemap').data('y');
                 console.log(x);
-                fullmap[x][y]= {
-                    id : '?',
-                    file : "penis",
+                fullmap[x][y] = {
+                    id: '?',
+                    file: "penis",
                 }
             }
         }, 3000);
-        
-        
-        
-        
-        
+
+
+
+
+
         window.closeIframe = function () {
             $('#editbloc').html('').hide();
             var obj = {};
@@ -355,9 +387,9 @@ $(document).ready(function () {
             var json = JSON.stringify(obj);
             ws.send(json);
         }
-        
-        
-        
+
+
+
         /* message */
         ws.onmessage = function (event) {
             var message = JSON.parse(event.data);
@@ -379,12 +411,22 @@ $(document).ready(function () {
             if (message.fullmap) {
                 fullmap = message.fullmap;
             }
-            
+
+            /*
+             * update hand only
+             */
+            if (message.updateHand) {
+                updateHand(message.updateHand);
+            }
+
+
             /*update card manager */
-            if(message.deck){
+            if (message.deck) {
                 updateCardManager(message.deck);
             }
             
+            
+
 
             /* list people in chat */
             if (message.command === 'list') {
@@ -414,7 +456,7 @@ $(document).ready(function () {
                 });
             }
 
-            
+
             /*  reception map presente   */
             if (message.map) {
                 var delay = 200;
@@ -429,9 +471,9 @@ $(document).ready(function () {
                 $('.fade2').fadeOut(delay);
                 $('.fade3').fadeOut(delay);
                 $('#imagebg').fadeOut(delay);
-                
+
                 var folder = $('#mapimage').data('folder');
-                if (message.map.user_id === $('#nom').data('id') || !message.map.user_id){
+                if (message.map.user_id === $('#nom').data('id') || !message.map.user_id) {
                     $('#edit-link').show();
                 }
                 $('#edit-link').attr('data-idmap', message.map.id);
@@ -439,7 +481,7 @@ $(document).ready(function () {
                     if (file) {
                         $('#imagebg').attr('src', folder + file + '?dummy=' + Math.floor(Math.random() * 999) + 1);
                     }
-                    
+
                 }
                 , delay);
                 timer2 = setTimeout(function () {
@@ -454,41 +496,58 @@ $(document).ready(function () {
                     $('.fade2').fadeIn(200);
                 }, 1000);
                 timer4 = setTimeout(function () {
-                    $('.fade3').fadeIn(200);                    
+                    $('.fade3').fadeIn(200);
                 }, 1500);
 
             }
-            
-            
+
+
             /* restore opponent */
             if (message.opponent) {
                 isolateOpponent(message.opponent);
             }
-            
-            if(message.cheater){
+
+            if (message.cheater) {
                 alert(message.cheater);
             }
-            
+
             /* duel offline engaged */
-            
+
             if (message.duel === 'go') {
-                duelInit(message,ws);
+                duelInit(message, ws);
             }
-            
+
             if (message.duel === 'playerCard') {
                 playerCard(message.data);
             }
-            
-            if(message.duel === 'update'){
-                duelUpdate(message,ws);      
+
+            if (message.duel === 'update') {
+                duelUpdate(message, ws);
             }
         };
-        $(document).on('click','.activehandcard',function(){
-            $(this).addClass('waitforposition');
-            positionCard(null);   
-                     
-            $('.activehandcard').removeClass('command').removeClass('activehandcard');
+        
+        /*
+         * Play Card Front Animation
+         * CLICK ON YOUR CARD
+         */
+        $(document).on('click', '.activehandcard', function () {
+            var turn = $('#turn').html();
+            $(this).addClass('waitforposition').addClass('turnactive').removeClass('playerhandcard').addClass('turnposed'+turn);
+            positionCard(null);           
+            $('.activehandcard').removeClass('command').removeClass('activehandcard');            
+            setTimeout(function () {
+                /* replace other cards */
+                $('.playerhandcard').addClass('waitforposition');
+                currentHCase=0;
+                positionCard('H');
+            }, 1000);            
         });
+
+        /* play OK play IA */
+        $(document).on('click','.updateturns',function(){
+            
+        });
+
 
         /* send chat */
         $('#chatte').click(function () {
@@ -501,20 +560,20 @@ $(document).ready(function () {
         });
 
         /* send command standard */
-        $(document).on('click','.command',function () {            
+        $(document).on('click', '.command', function () {
             var obj = {};
             obj.command = $(this).data('command');
             obj.value = $(this).data('value');
             var json = JSON.stringify(obj);
-            console.log('send command '+obj.command+' '+obj.value);
-            try{
+            console.log('send command ' + obj.command + ' ' + obj.value);
+            try {
                 ws.send(json);
-            } catch (e){
+            } catch (e) {
                 window.location.reload();
             }
         });
 
-       
+
 
         /* move command */
         $('.move .command').click(function () {
@@ -531,59 +590,64 @@ $(document).ready(function () {
         });
 
 
-        
+
         /* click on people */
-        $(document).on('click','.otherpeople',function(){
-            
-            $('#imagebg').data('desc',$('.desc').html());
+        $(document).on('click', '.otherpeople', function () {
+
+            $('#imagebg').data('desc', $('.desc').html());
             $('#duelbg').fadeIn(700);
             var id_target = $(this).data('id');
             isolateOpponent(id_target);
-            
-            $('.desc').html('<strong>' + $(this).data('username')+'</strong> est là, et vous observe avec provocation.');
+
+            $('.desc').html('<strong>' + $(this).data('username') + '</strong> est là, et vous observe avec provocation.');
             $('.desc').append('<br/>Que voulez faire avec lui ? <br/><br/>');
             $('.desc').append('<li><a href="#duel">Examiner</a></li>');
-            $('.desc').append('<li><a href="#duel" class="command" data-command="duel" data-value="'+id_target+'">Attaquer</a></li>');
-            $('.desc').append('<li><a href="#duel">Echanger</a></li>');            
+            $('.desc').append('<li><a href="#duel" class="command" data-command="duel" data-value="' + id_target + '">Attaquer</a></li>');
+            $('.desc').append('<li><a href="#duel">Echanger</a></li>');
             $('.desc').append('<li><a id="annuler" href="#duel">Annuler</a></li>');
         })
-        
-        $(document).on('click','#annuler',function(){
+
+        $(document).on('click', '#annuler', function () {
             $('#duelbg').fadeOut(700);
             $('.desc').html($('#imagebg').data('desc'));
             $('.otherpeople').animate({opacity: 1}, 700, 'linear');
         });
-        
-        $('#closecardmanager').click(function(){
+
+        $('#closecardmanager').click(function () {
             $('#positionner').html('');
             $('.managercard').remove();
             $('#cardmanager').hide();
         });
-        
+
+        $('#reload').click(function () {
+            $(this).addClass('disabled');
+        });
+
     }
 
-$(document).keydown(function(e) {
-    switch(e.which) {
-        case 37: // left
-            $('#left').trigger('click');
-        break;
+    $(document).keydown(function (e) {
+        switch (e.which) {
+            case 37: // left
+                $('#left').trigger('click');
+                break;
 
-        case 38: // up
-            $('#up').trigger('click');
-        break;
+            case 38: // up
+                $('#up').trigger('click');
+                break;
 
-        case 39: // right
-            $('#right').trigger('click');
-        break;
+            case 39: // right
+                $('#right').trigger('click');
+                break;
 
-        case 40: // down
-            $('#down').trigger('click');
-        break;
+            case 40: // down
+                $('#down').trigger('click');
+                break;
 
-        default: return; // exit this handler for other keys
-    }
-    e.preventDefault(); // prevent the default action (scroll / move caret)
-});
+            default:
+                return; // exit this handler for other keys
+        }
+        e.preventDefault(); // prevent the default action (scroll / move caret)
+    });
 
 
 

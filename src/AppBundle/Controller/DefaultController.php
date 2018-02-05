@@ -53,7 +53,7 @@ class DefaultController extends Controller {
 
 
 
-
+            
             $mains = $em->getRepository('AppBundle:Deck')->findByUser($user);
             if (!$mains) {
                 $mains = array();
@@ -88,7 +88,7 @@ class DefaultController extends Controller {
                     'info' => $info,
                     'user' => $user,
                     'token' => $token,
-                    'deck' => $mains,
+                   // 'deck' => $mains,
                     'images_folder' => Map::IMAGES_FOLDER,
                     'user_folder' => User::IMAGES_FOLDER,
                     'map' => $map,

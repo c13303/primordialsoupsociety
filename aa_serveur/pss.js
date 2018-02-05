@@ -18,14 +18,14 @@ var tools = require('./tools.js');
 var connection = mysql.createConnection({
     host: params.localhost,
     user: params.user,
-    password:  params.password,
-    database:  params.database
+    password: params.password,
+    database: params.database
 });
 connection.connect();
 console.log('Lancement serveur');
 
 /* command line args */
-function flush(){
+function flush() {
     var flushsessionquery = "UPDATE `pss`.`fos_user` SET `sessiondata` = '' ";
     connection.query(flushsessionquery, function (err, rows, fields) {
         console.log('sessions FLUSHED!');
@@ -33,21 +33,21 @@ function flush(){
 }
 
 process.argv.forEach(function (val, index, array) {
-   if(val=='-flush'){ //flush all sessions
-       flush();
-   }
+    if (val == '-flush') { //flush all sessions
+        flush();
+    }
 });
 
 var stdin = process.openStdin();
 
-stdin.addListener("data", function(d) {
-    var commande =  d.toString().trim();
-    console.log("you entered: [" + 
-       commande + "]");
-       if(commande==='flush'){
-           flush();
-       }
-  });
+stdin.addListener("data", function (d) {
+    var commande = d.toString().trim();
+    console.log("you entered: [" +
+            commande + "]");
+    if (commande === 'flush') {
+        flush();
+    }
+});
 
 
 
@@ -63,7 +63,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer(
                     var username = urlinfo[1];
                     var token = urlinfo[0];
                     var query = 'SELECT id,ip,username FROM fos_user WHERE username= ? AND token = ?';
-                    connection.query(query,[username,token], function (err, rows, fields) {
+                    connection.query(query, [username, token], function (err, rows, fields) {
                         if (!rows || !rows[0])
                         {
                             callback(false);
@@ -72,7 +72,7 @@ var WebSocketServer = require('ws').Server, wss = new WebSocketServer(
                         var n = ip.indexOf(rows[0].ip);
                         if (rows[0] && rows[0].id && n)
                         {
-                            connection.query('UPDATE fos_user SET token="0" WHERE username=? AND token = ? ',[username,token]);
+                            connection.query('UPDATE fos_user SET token="0" WHERE username=? AND token = ? ', [username, token]);
                             callback(true);
                         } else
                         {
@@ -104,7 +104,7 @@ cardIndex.reload = function reloadIndex() {
         }
         cardIndex.cardIndex = cardindex;
     });
-}
+};
 
 
 map.getAllMap = function getAllMap() {
@@ -151,7 +151,7 @@ map.move = function move(ws, direction) {
     var query = 'UPDATE fos_user SET x= ? ,y= ? WHERE id= ?;';
     ws.x = nextX;
     ws.y = nextY;
-    connection.query(query, [nextX,nextY,ws.id],function (err, rows, fields) {
+    connection.query(query, [nextX, nextY, ws.id], function (err, rows, fields) {
         ws.send(JSON.stringify({command: 'moved', x: nextX, y: nextY}));
         map.checkMap(ws);
         map.playerList(ws, clients);
@@ -163,7 +163,7 @@ map.move = function move(ws, direction) {
 
 map.checkMap = function pssCheckMap(ws) {
     var query = 'SELECT id,name,description,user_id,file,x,y FROM map WHERE X=? AND Y=?';
-    connection.query(query,[ws.x,ws.y], function (err, rows, fields) {
+    connection.query(query, [ws.x, ws.y], function (err, rows, fields) {
         try {
             if (!rows[0]) {
                 console.log('leaving map :-(');
@@ -186,7 +186,7 @@ map.update = function pssUpdate(ws, id = null) {
         id = ws.id;
     }
     var query = 'SELECT x,y,karma,sex,life,sanity,score,speak,money,level,file,AI FROM fos_user WHERE id=?';
-    connection.query(query,id, function (err, rows, fields) {
+    connection.query(query, id, function (err, rows, fields) {
         if (rows) {
             ws.send(JSON.stringify({update: rows[0]}));
         }
@@ -213,18 +213,18 @@ map.isOnline = function isOnline(clients, id) {
 
 map.whosthere = function whosThere(ws) {
     var query = 'SELECT id,username,x,y,speak,level,karma,sex,sanity,life,money,file FROM fos_user WHERE x=? AND y=?';
-    var info = connection.query(query,[ws.x,ws.y],function (err, rows, fields) {
+    var info = connection.query(query, [ws.x, ws.y], function (err, rows, fields) {
         ws.send(JSON.stringify({whosthere: rows}));
         // was in duel 
         // TODO what if not here anywmore ? 
         if (ws.session.duelmode) {
-            console.log('restore duel '+ws.id);
+            console.log('restore duel ' + ws.id);
             cardIndex.reload();
             ws.updateDuelClient(1);
-            ws.send(JSON.stringify({opponent: ws.session.ennemy.id}));            
+            ws.send(JSON.stringify({opponent: ws.session.ennemy.id}));
         }
-        
-        
+
+
     });
 
 };
@@ -279,123 +279,127 @@ wss.on('connection', function aconnection(ws, req) {
     var username = urlinfo[1];
     var token = urlinfo[0];
     var query = 'SELECT id,ip,username,x,y,score,money,life,karma,sex,sanity,level,sessiondata FROM fos_user WHERE username=?';
-    var info = connection.query(query, username,function (err, rows, fields) {
+    var info = connection.query(query, username, function (err, rows, fields) {
         ws.id = rows[0].id;
         ws.user = rows[0].username;
-        ws.player = rows[0];        
+        ws.player = rows[0];
         ws.ip = rows[0].ip;
         ws.x = rows[0].x;
         ws.y = rows[0].y;
-        
-        try{
-            if(rows[0].sessiondata && rows[0].sessiondata != 'undefined'){ 
-               ws.session = JSON.parse(rows[0].sessiondata);      
-              
-            } else{
-               ws.session = {};
+
+        try {
+            if (rows[0].sessiondata && rows[0].sessiondata != 'undefined') {
+                ws.session = JSON.parse(rows[0].sessiondata);
+
+            } else {
+                ws.session = {};
             }
-        } catch(e){
+        } catch (e) {
             console.log(e);
             ws.session = {};
         }
-     
+
         ws.connected();
-        
+
     });
     // on connect
     ws.connected = function connected() {
         console.log('--- client access granter ' + this.user + '@' + this.ip + '----');
-       
-        
+
+
         /* check if connected already, KICKING HIM */
-        for (i = 0; i < clients.length; i++) { 
+        for (i = 0; i < clients.length; i++) {
             if (clients[i].user === this.user) {
                 this.send(JSON.stringify({'user': 'serveur', 'message': 'utilisateur déjà connecté ! fermant connexion ' + this.user + '! '}));
                 ws.cheater('refus de connexion : utilisateur déjà connecté !');
                 this.close();
                 return(null);
             }
-        }       
-        
-         /* send full map */
+        }
+
+        /* send full map */
         ws.send(JSON.stringify({fullmap: fullmap}));
-        
+
         /* reload is deck */
-       // ws.updateDeck();     
-       
+        // ws.updateDeck();     
+
         this.send(JSON.stringify({'user': 'serveur', 'message': 'coucou ' + this.user + '! '}));
         clients.push(this); /* add to client list */
         map.playerList(this, clients);
         map.checkMap(this);
-        map.whosthere(this);      
-        
+        map.whosthere(this);
+
     };
-    ws.cheater = function cheater(message){
+    ws.cheater = function cheater(message) {
         ws.send(JSON.stringify({cheater: message}));
     };
-    
+
     ws.updateSession = function updateSession() {
         var sessiondata = JSON.stringify(ws.session);
-        var query = 'UPDATE fos_user SET sessiondata = ? WHERE id = ?';       
-        var info = connection.query(query, [sessiondata,ws.id],function (err, rows, fields) {         
+        var query = 'UPDATE fos_user SET sessiondata = ? WHERE id = ?';
+        var info = connection.query(query, [sessiondata, ws.id], function (err, rows, fields) {
         });
     };
-        
-    ws.sendDeck = function(){
-        ws.send(JSON.stringify({deck: ws.deck}));  
+
+    ws.sendDeck = function () {
+        ws.send(JSON.stringify({deck: ws.deck}));
     };
-    
+
     // update player deck
     ws.updateDeck = function updateDeck(callback) {
         cardIndex.reload();
         var query = 'SELECT * FROM deck WHERE user_id = ? ORDER BY card_id ASC';
-        var info = connection.query(query, this.id,function (err, rows, fields) {
-            ws.deck =  tools.formatAllDeck(rows,cardIndex.cardIndex);
+        var info = connection.query(query, this.id, function (err, rows, fields) {
+            ws.deck = tools.formatAllDeck(rows, cardIndex.cardIndex);
             if (ws[callback] && typeof (ws[callback]) === "function") {
                 ws[callback]();
             }
         });
     };
     
-   
-    
+    ws.sendExpired = function sendExpired(){
+        ws.send(JSON.stringify({expired: ws.session.cardsToRemove}));
+    };
+
+
 
 
 
     /*
      * DUEL 
      */
-    
+
     ws.updateDuelClient = function updateClientDuel(init) {
         var data = {
             player: {
-                id : ws.player.id,
-                username : ws.player.username,
-                life : ws.player.life,
-                sex : ws.player.sex,
-                karma : ws.player.karma,
-                sanity : ws.player.sanity,
-                level : ws.player.level,
+                id: ws.player.id,
+                username: ws.player.username,
+                life: ws.player.life,
+                sex: ws.player.sex,
+                karma: ws.player.karma,
+                sanity: ws.player.sanity,
+                level: ws.player.level,
                 money: ws.player.money,
                 score: ws.player.score
             },
             ennemy: ws.session.ennemy,
             hand: ws.session.hand,
-            ennemyHand: ws.session.ennemyHand,
+         //   ennemyHand: ws.session.ennemyHand,
             allowedToPlay: ws.session.allowedToPlay,
-            duelTurn : ws.session.duelTurn,
-            table : ws.session.table,   
-            last : ws.session.last
-            
-        }    
-        if(init){
+            duelTurn: ws.session.duelTurn,
+            table: ws.session.table,
+            last: ws.session.last,
+            cardsToRemove:ws.session.cardsToRemove,
+
+        }
+        if (init) {
             var duel = 'go';
         } else {
             var duel = 'update';
         }
         ws.send(JSON.stringify({duel: duel, data: data}));
-        
-    }
+
+    };
 
     /*
      * INIT DUEL SERVER SIDE
@@ -405,36 +409,36 @@ wss.on('connection', function aconnection(ws, req) {
         var adversaire_id = json.value;
         cardIndex.reload();
         ws.adversaire = adversaire_id;
-        ws.session.isHost = 1;  
-        ws.updateDeck('initDuel2');        
-    }
-    
-    ws.initDuel2 = function initDuel2(){
+        ws.session.isHost = 1;
+        ws.updateDeck('initDuel2');
+    };
+
+    ws.initDuel2 = function initDuel2() {
         /* duel mode off or online */
         if (map.isOnline(clients, ws.adversaire)) {
             console.log('online duel');
             map.findClient(clients, ws.adversaire);
             ws.session.isOnline = 1;
-                      
+
             /* TODO SEND ALL DATA TO WS OPPONENT */
             /* wss find opponent ws */
             /* ws update */
             /* send to client */
             /* host wait for him */
             /* open the battle */
-            
+
         } else {
             console.log('offline duel');
             ws.setEnnemy(ws.adversaire);
             ws.session.isOnline = 0;
         }
     }
-    
-    
+
+
 
     // init offline duel step 2 : get ennemy
     ws.setEnnemy = function setEnnemy(id) {
-        var query = 'SELECT id,username,x,y,speak,level,karma,sex,sanity,life,money,file FROM fos_user WHERE id = ? LIMIT 0,1';
+        var query = 'SELECT id,username,x,y,level,karma,sex,sanity,life FROM fos_user WHERE id = ? LIMIT 0,1';
         connection.query(query, id, function (err, rows, fields) {
             ws.session.ennemy = rows[0];
             ws.loadEnnemyDeck();
@@ -445,17 +449,17 @@ wss.on('connection', function aconnection(ws, req) {
     // init offline duel step 3 : get ennemy deck
     ws.loadEnnemyDeck = function loadEnnemyDeck() {  /// ofline ennemy deck
         var query = 'SELECT * FROM deck WHERE user_id = ?';
-        connection.query(query, this.adversaire, function (err, rows, fields) {            
+        connection.query(query, this.adversaire, function (err, rows, fields) {
             if (!ws.deck.length || !rows.length) {
                 console.log('error : empty deck');
-            } else {         
-                
-                ws.session.ennemyDeck =  tools.formatAllDeck(rows,cardIndex.cardIndex);
+            } else {
+
+                ws.session.ennemyDeck = tools.formatAllDeck(rows, cardIndex.cardIndex);
                 /*
                  * INIT THE DUEL CLIENT
                  */
                 ws.session.player = ws.player;
-                ws.session.player.sessiondata = ws.session.player.ip = '';  /// le player session est cleané
+                ws.session.player.sessiondata = ws.session.player.ip = ws.session.player.speak = '' ;  /// le player session est cleané
                 ws.session.deck = tools.shuffle(ws.deck);
                 ws.session.ennemyDeck = tools.shuffle(ws.session.ennemyDeck);
                 ws.session.hand = tools.sixFirst(ws.session.deck);
@@ -464,13 +468,14 @@ wss.on('connection', function aconnection(ws, req) {
                 ws.session.duelmode = 1;
                 ws.session.busy = 1;
                 ws.session.table = [];
+                ws.session.takenturns=[];
                 ws.session.last = {};
-                ws.player.life = 100;                
+                ws.player.life = 100;
                 ws.session.ennemy.life = 100;
-                
+
                 if (ws.session.ennemy.karma > ws.player.karma) {
                     ws.session.allowedToPlay = 0; // adversaire
-                    
+
                 } else {
                     ws.session.allowedToPlay = 1; // player
                 }
@@ -479,29 +484,34 @@ wss.on('connection', function aconnection(ws, req) {
 
                 ws.updateDuelClient(1);
                 ws.updateSession();
-                
-                
-                
+
+
+
             }
 
         });
-    }
-    
+    };
+
+
+
+
+
     /*
      * Player Played His Card
      */
-    ws.playCard = function playCard(id_hand,idplayer){
+    ws.playCard = function playCard(id_hand, idplayer) {
         /* json.value === ID de la main, not id card */
         /* security check if card in HAND */
         var card = 0;
         var IA = 0;
         var turn = ws.session.duelTurn;
-        
-        if(idplayer !== ws.id){
+        var localIndex = JSON.parse(JSON.stringify(cardIndex.cardIndex));
+        console.log('Turn '+turn);
+        if (idplayer !== ws.id) {
             var IA = 1;
         }
         
-        if(!IA){
+        if (!IA) {
             var Hand = ws.session.hand;
             var attacker = ws.session.player;
             var defender = ws.session.ennemy;
@@ -510,79 +520,154 @@ wss.on('connection', function aconnection(ws, req) {
             var attacker = ws.session.ennemy;
             var defender = ws.session.player;
         }
-        
-        
-        for (i = 0; i < handsize; i++) {
-            var cardInHand = Hand[i];
-            if (cardInHand && cardInHand.deck_id === id_hand) {
-                /* find card in index */
-                var card = cardInHand;
-                // removeCardFromHand
-                Hand.splice(i,1);
-                break;
+        if(id_hand){  
+            for (i = 0; i < handsize; i++) {
+                var cardInHand = Hand[i];
+                if (cardInHand && cardInHand.deck_id === id_hand) {
+                    /* find card in index */
+                    var card = localIndex[cardInHand.id];
+                    card.turnPosed = turn;
+                    // removeCardFromHand
+                    Hand.splice(i, 1);
+                    break;
+                }
             }
+            if (!card) {
+                ws.cheater('error : card not found');
+                return(null);
+            }
+            /* set this card on table */
+            ws.session.table[turn] = {
+                id: card.id,
+                deck_id: id_hand,
+                card: card,
+                attacker: attacker,
+                defender: defender,
+                turn: card.turns,
+            };
+
+            
+        } else {
+            
+            cardInHand = null;
+            card = null; 
+            ws.session.table[turn] = {
+                id: null,
+                deck_id: null,
+                card: null,
+                attacker: attacker,
+                defender: defender,
+                turn: null,
+            };
         }
-        if (!card) {            
-            ws.cheater('error : card not found');
-            return(null);
-        }
-        /* set this card on table */
-        ws.session.table[turn] = {
-            id: card.id,
-            deck_id: id_hand,
-            card : card,
-            attacker : attacker,
-            defender : defender,
-            turn: card.turns,
-        };
-        /* increment turn */
-        ws.session.duelTurn++;
         
-        /* turn table card expire */
         
 
+
+        /* increment turn */
+        ws.session.duelTurn++;
+
+        /* turn table card expire */
+        var expiredTable = tools.expiredCards(ws.session.table);
+        ws.session.table = expiredTable.newTable;
+        ws.session.cardsToRemove = expiredTable.cardsToRemove;   
+              
+
+
+
         /* load shield and attacks */
-        var damage = tools.calculateStrike(attacker,defender, ws.session.table);   
-        if(damage.totalDamage>0){            
-            defender.life-= damage.totalDamage;             
+        var damage = tools.calculateStrike(attacker, defender, ws.session.table);
+        if (damage.totalDamage > 0) {
+            defender.life -= damage.totalDamage;
         }
-        if(damage.totalDamage<0){
-            attacker.life+= damage.totalDamage;
-        }        
+        if (damage.totalDamage < 0) {
+            attacker.life += damage.totalDamage;
+        }
         /*
          * Save Session Updated Values
          */
-        if(!IA){
+        if (!IA) {
             ws.session.hand = Hand;
             ws.session.allowedToPlay = 0;
-            ws.session.player = attacker; 
+            ws.session.player = attacker;
             ws.session.ennemy = defender;
         } else { /* IA */
             ws.session.ennemyHand = Hand;
-            ws.session.allowedToPlay = 1; 
-            ws.session.ennemy = attacker; 
+            ws.session.allowedToPlay = 1;
+            ws.session.ennemy = attacker;
             ws.session.player = defender;
-            
+
             /* add card on table client */
             card.deck_id = id_hand;
             ws.send(JSON.stringify({duel: 'playerCard', data: cardInHand}));
-        }   
-        ws.session.table[turn].log = ws.session.last = damage;        
+        }
+        ws.session.table[turn].log = ws.session.last = damage;           
+        
+        
+        
+        
         /* display the coup */
-         ws.updateDuelClient(0);
-         ws.updateSession();
-         
-         
-         
-         
-    }
+        ws.updateDuelClient(0);               
+        
+        ws.updateSession();
+
+    };
+    ws.skipTurn = function skipTurn(){
+        ws.playCard(null,ws.id);
+    };
     
+    ws.takeCardIA = function takeCardIA(){
+        /* shuffle deck then take first card not in hand nor in table */
+        var deck = tools.shuffle(ws.session.ennemyDeck);
+        var playedCards = tools.getPlayedCardsFromTable(ws.session.table);
+        var hands = tools.getIdCardsFromHand(ws.session.ennemyHand);
+        for (i = 0; i < deck.length; i++) {
+            var newcard = deck[i];
+            var id = deck[i].id;
+            if (playedCards.indexOf(id) === -1 && hands.indexOf(id) === -1) {                
+                break;
+            }
+        }
+        ws.session.ennemyHand.push(newcard);
+        ws.updateSession();
+    };
     
-    ws.IAPlay = function IAPlay(){        
-        var randomcard = Math.floor((Math.random() * ws.session.ennemyHand.length));        
-        console.log('IA '+ws.session.ennemy.username+' is playing card : '+randomcard+'/'+ws.session.ennemyHand.length);
-        ws.playCard(ws.session.ennemyHand[randomcard].deck_id,null);        
-    }
+    ws.takeCard = function takeCard() {
+        if (ws.session.hand.length > 5) {
+            ws.cheater('main pleine !');
+            return(null);
+        }
+        if(ws.session.takenturns.indexOf(ws.session.duelTurn)>0){
+            ws.cheater('déjà pris une carte ce tour !');
+            return(null);
+        }
+        ws.session.takenturns.push(ws.session.duelTurn);
+        /* shuffle deck then take first card not in hand nor in table */
+        var deck = tools.shuffle(ws.session.deck);
+        var playedCards = tools.getPlayedCardsFromTable(ws.session.table);
+        var hands = tools.getIdCardsFromHand(ws.session.hand);
+        for (i = 0; i < deck.length; i++) {
+            var newcard = deck[i];
+            var id = deck[i].id;
+            if (playedCards.indexOf(id) === -1 && hands.indexOf(id) === -1) {
+                console.log(id);
+                break;
+            }
+        }
+        ws.session.hand.push(newcard);
+        ws.updateSession();
+        ws.send(JSON.stringify({updateHand: ws.session.hand}));
+    };
+
+
+    ws.IAPlay = function IAPlay() {
+        if(ws.session.duelTurn > 2){
+            ws.takeCardIA();
+        }
+        var randomcard = Math.floor((Math.random() * ws.session.ennemyHand.length));
+        console.log('IA ' + ws.session.ennemy.username + ' is playing card : ' + randomcard + '/' + ws.session.ennemyHand.length);
+        ws.playCard(ws.session.ennemyHand[randomcard].deck_id, null);
+    };
 
 
 
@@ -594,7 +679,7 @@ wss.on('connection', function aconnection(ws, req) {
     /*read messages */
     ws.on('message', function incoming(message) {
         try {
-            var json = JSON.parse(message);             
+            var json = JSON.parse(message);
             console.log(json);
             if (json.command === 'chat') {
                 var message = {};
@@ -602,11 +687,11 @@ wss.on('connection', function aconnection(ws, req) {
                 message.user = ws.user;
                 wss.broadcast(JSON.stringify(message));
             }
-            
+
             /*
              *  0 LEVEL COMMANDS
              */
-            
+
             if (!ws.session.busy && !ws.session.duelmode) {
                 if (json.command === 'update') {
                     map.update(ws);
@@ -619,26 +704,37 @@ wss.on('connection', function aconnection(ws, req) {
                 if (json.command === 'duel') {
                     ws.initDuel(json);
                 }
-                
-           
+
+
                 if (json.command === 'move') {
                     map.move(ws, json.value);
                 }
-                
+
                 if (json.command === 'getmycards') {
-                     ws.updateDeck('sendDeck');
+                    ws.updateDeck('sendDeck');
                 }
+                
+                if (json.command === 'getexpired') {
+                    ws.sendExpired();
+                }
+                
             } // end busy
-            
+
             /* duel mode commands */
-            if(ws.session.duelmode){
-                if(ws.session.allowedToPlay===1){
-                    if (json.command === 'playcard') {                
-                        ws.playCard(json.value,ws.id);  
+            if (ws.session.duelmode) {
+                if (ws.session.allowedToPlay === 1) {
+                    if (json.command === 'playcard') {
+                        ws.playCard(json.value, ws.id);
                     }
-                }else{
-                     if (json.command === 'waitForOpponent') {                
-                         ws.IAPlay();
+                    if (json.command === 'takeCard') {
+                        ws.takeCard();
+                    }
+                    if (json.command === 'skipTurn') {
+                        ws.skipTurn();
+                    }
+                } else {
+                    if (json.command === 'waitForOpponent') {
+                        ws.IAPlay();
                     }
                 }
             }
